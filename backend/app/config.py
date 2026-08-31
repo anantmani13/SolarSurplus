@@ -9,7 +9,11 @@ load_dotenv()
 
 class Settings(BaseSettings):
     port: int = 8000
-    cors_origins: list[str] = ["*"]
+    cors_origins: list[str] = [
+        "https://solarsurplus-531a4.web.app",
+        "http://localhost:5173",
+        "http://localhost:3000"
+    ]
 
     # Model paths
     xgboost_model_path: str = os.path.join(

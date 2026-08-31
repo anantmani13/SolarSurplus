@@ -160,7 +160,7 @@ function generateClientFallbackForecast(userInput) {
       battery_capacity_kwh,
       panel_age_years,
       battery_age_years,
-      current_charge_percent,
+      current_charge_percent: current_battery_charge,
     },
     hourly_forecast: hourlyForecast,
     daily_summary: {

@@ -75,23 +75,28 @@ class SolarPredictor:
         predictions = []
 
         if self.xgb_model and self._loaded:
-            # ML-based prediction
-            for hour_data in weather_data:
-                features = self._extract_features(hour_data)
-                if self.scaler:
-                    features = self.scaler.transform(features.reshape(1, -1))
-                if self.pca:
-                    features = self.pca.transform(features.reshape(1, -1))
-                pred = self.xgb_model.predict(features.reshape(1, -1))[0]
-                # Scale prediction to user's panel capacity
-                pred = max(0, pred * effective_capacity)
-                predictions.append(round(pred, 3))
-        else:
-            # Physics-based fallback
-            for hour_data in weather_data:
-                ghi = hour_data.get("ghi", 0)
-                gen = estimate_solar_generation(ghi, effective_capacity)
-                predictions.append(round(gen, 3))
+            try:
+                # ML-based prediction
+                for hour_data in weather_data:
+                    features = self._extract_features(hour_data)
+                    if self.scaler:
+                        features = self.scaler.transform(features.reshape(1, -1))
+                    if self.pca:
+                        features = self.pca.transform(features.reshape(1, -1))
+                    pred = self.xgb_model.predict(features.reshape(1, -1))[0]
+                    # Scale prediction to user's panel capacity
+                    pred = max(0, pred * effective_capacity)
+                    predictions.append(round(float(pred), 3))
+                return predictions
+            except Exception as e:
+                print(f"[PREDICTOR] ML model inference failed ({e}). Falling back to physics-based estimation.")
+                predictions = []
+
+        # Physics-based fallback
+        for hour_data in weather_data:
+            ghi = hour_data.get("ghi", 0)
+            gen = estimate_solar_generation(ghi, effective_capacity)
+            predictions.append(round(float(gen), 3))
 
         return predictions
 

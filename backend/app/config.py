@@ -1,14 +1,14 @@
 """Application configuration loaded from environment variables."""
 
 import os
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
-class Settings(BaseSettings):
-    port: int = 8000
+class Settings(BaseModel):
+    port: int = Field(default_factory=lambda: int(os.getenv("PORT", 8000)))
     cors_origins: list[str] = [
         "https://solarsurplus-531a4.web.app",
         "http://localhost:5173",
@@ -29,8 +29,6 @@ class Settings(BaseSettings):
         os.path.dirname(__file__), "..", "..", "ml", "saved_models", "pca.pkl"
     )
 
-    class Config:
-        env_file = ".env"
-
 
 settings = Settings()
+

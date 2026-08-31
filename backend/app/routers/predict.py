@@ -1,0 +1,91 @@
+"""Prediction API endpoints."""
+
+from fastapi import APIRouter, HTTPException
+from app.models.schemas import UserInput, PredictionResponse, HourlyForecast
+from app.services.weather_service import fetch_weather_forecast
+from app.services.solar_predictor import predictor
+from app.services.battery_optimizer import calculate_battery_schedule
+
+router = APIRouter()
+
+# Try loading models on import
+predictor.load_models()
+
+
+@router.post("/forecast", response_model=PredictionResponse)
+async def generate_forecast(user_input: UserInput):
+    """
+    Generate solar surplus energy forecast.
+
+    1. Fetch weather forecast for user's location
+    2. Predict solar generation using ML model (or physics fallback)
+    3. Calculate surplus and battery schedule
+    4. Return full forecast with recommendations
+    """
+    try:
+        # 1. Fetch weather data
+        weather = await fetch_weather_forecast(
+            user_input.latitude,
+            user_input.longitude,
+            forecast_days=7,
+        )
+        weather_hours = weather["hourly"]
+
+        # 2. Predict solar generation
+        generation = predictor.predict_generation(
+            weather_hours,
+            user_input.solar_panel_capacity_kw,
+            user_input.panel_age_years,
+        )
+
+        # 3. Calculate battery schedule
+        battery_result = calculate_battery_schedule(
+            hourly_generation=generation,
+            avg_daily_consumption_kwh=user_input.avg_daily_consumption_kwh,
+            battery_capacity_kwh=user_input.battery_capacity_kwh,
+            current_charge_percent=user_input.current_battery_charge,
+            battery_age_years=user_input.battery_age_years,
+        )
+
+        # 4. Build hourly forecast entries
+        hourly_forecast = []
+        for i, (weather_h, sched) in enumerate(
+            zip(weather_hours[:len(generation)], battery_result["schedule"])
+        ):
+            hourly_forecast.append(HourlyForecast(
+                hour=i,
+                timestamp=weather_h.get("timestamp", ""),
+                temperature=weather_h.get("temperature", 0),
+                cloud_cover=weather_h.get("cloud_cover", 0),
+                ghi=weather_h.get("ghi", 0),
+                dni=weather_h.get("dni", 0),
+                dhi=weather_h.get("dhi", 0),
+                predicted_generation_kwh=sched["generation_kwh"],
+                estimated_consumption_kwh=sched["consumption_kwh"],
+                surplus_kwh=sched["surplus_kwh"],
+                battery_action=sched["battery_action"],
+                battery_charge_kwh=sched["battery_charge_kwh"],
+                battery_soc_percent=sched["battery_soc_percent"],
+            ))
+
+        return PredictionResponse(
+            location={
+                "latitude": user_input.latitude,
+                "longitude": user_input.longitude,
+                "timezone": weather.get("timezone", "UTC"),
+            },
+            system_info={
+                "panel_capacity_kw": user_input.solar_panel_capacity_kw,
+                "battery_capacity_kwh": user_input.battery_capacity_kwh,
+                "panel_age_years": user_input.panel_age_years,
+                "battery_age_years": user_input.battery_age_years,
+                "current_charge_percent": user_input.current_battery_charge,
+            },
+            hourly_forecast=hourly_forecast,
+            daily_summary=battery_result["daily_summary"],
+            recommendations=battery_result["recommendations"],
+            model_used="XGBoost + Weather API" if predictor.xgb_model else "Physics-Based Estimation",
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")

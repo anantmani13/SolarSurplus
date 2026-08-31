@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Environment
+.env
+.env.local
+frontend/.env
+backend/.env
+
+# Build
+frontend/dist/
+*.egg-info/
+
+# ML artifacts
+ml/data/raw/*.csv
+ml/saved_models/*.pt
+ml/saved_models/*.json
+ml/saved_models/*.pkl
+ml/results/*.png
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store

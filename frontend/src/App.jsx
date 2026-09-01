@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { useAuth } from './hooks/useAuth';
-import { generateForecast } from './services/api';
+import { generateForecast, warmUpBackend } from './services/api';
 import { saveUserEntry, savePrediction, saveNotification } from './services/firebase';
 
 import Navbar from './components/Navbar';
@@ -33,6 +33,14 @@ export default function App() {
         setPredictions(JSON.parse(saved));
       } catch (e) {}
     }
+  }, []);
+
+  // Warm up the ML backend on load and keep it awake so forecasts use LSTM/XGBoost
+  // instead of timing out on a sleeping Render instance.
+  useEffect(() => {
+    warmUpBackend();
+    const t = setInterval(() => warmUpBackend(), 240000);
+    return () => clearInterval(t);
   }, []);
 
   const handleForecast = useCallback(async (formData) => {

@@ -4,11 +4,23 @@
  * even if cloud hosting or third-party weather APIs face rate-limiting (429).
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+const REQUEST_TIMEOUT_MS = 90000;
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function fetchAPI(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`;
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: { 'Content-Type': 'application/json', ...options.headers },
     ...options,
   });
@@ -20,6 +32,22 @@ async function fetchAPI(endpoint, options = {}) {
 
   return response.json();
 }
+
+/**
+ * Warm up the backend (Render free instances sleep after idle).
+ * Pinging the root endpoint is a simple GET (no CORS preflight) and forces
+ * a cold boot to complete before the user submits a forecast.
+ */
+export async function warmUpBackend() {
+  try {
+    await fetchWithTimeout(`${API_URL}/`, {}, 60000);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Generate client-side solar generation and battery simulation.
@@ -318,7 +346,7 @@ async function fetchClientWeather(lat, lon, days = 7) {
  * Tries the FastAPI backend first; falls back seamlessly to client engine if API is rate limited.
  */
 export async function generateForecast(userInput) {
-  try {
+  const callPredict = async () => {
     // Pre-fetch weather client-side to bypass backend IP rate limiting
     const clientWeather = await fetchClientWeather(userInput.latitude, userInput.longitude);
     if (clientWeather) {
@@ -329,9 +357,19 @@ export async function generateForecast(userInput) {
       method: 'POST',
       body: JSON.stringify(userInput),
     });
+  };
+
+  try {
+    return await callPredict();
   } catch (err) {
-    console.warn('[SolarSurplus] Backend API unavailable or rate-limited, running resilient client forecast:', err.message);
-    return generateClientFallbackForecast(userInput);
+    console.warn('[SolarSurplus] First attempt failed (likely Render cold boot), retrying:', err.message);
+    await sleep(2500);
+    try {
+      return await callPredict();
+    } catch (err2) {
+      console.warn('[SolarSurplus] Backend API unavailable or rate-limited, running resilient client forecast:', err2.message);
+      return generateClientFallbackForecast(userInput);
+    }
   }
 }
 

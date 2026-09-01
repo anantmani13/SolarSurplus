@@ -418,7 +418,7 @@ export default function InputForm({ onSubmit, loading }) {
           {loading ? (
             <>
               <Loader2 size={20} className="spinner" />
-              Generating Accurate Forecast...
+              Waking ML Engine & Generating Forecast...
             </>
           ) : (
             <>

@@ -8,7 +8,7 @@ recommendations to the React frontend.
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import predict, weather
+from app.routers import predict, weather, debug
 from app.config import settings
 
 

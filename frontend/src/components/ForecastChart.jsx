@@ -34,7 +34,7 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
   // First 48 hours for clarity
   const chartData = data.slice(0, 48).map((entry, i) => ({
     time: entry.timestamp
-      ? new Date(entry.timestamp).toLocaleTimeString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
+      ? new Date(entry.timestamp).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
       : `H${i}`,
     Generation: entry.predicted_generation_kwh || entry.generation_kwh || 0,
     Consumption: entry.estimated_consumption_kwh || entry.consumption_kwh || 0,

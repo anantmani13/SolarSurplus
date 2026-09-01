@@ -108,9 +108,9 @@ export default function InputForm({ onSubmit, loading }) {
     e.preventDefault();
     
     // Parse values to floats on submit to avoid 0 sticking in inputs
-    const parsedForm = { ...form };
+    const parsedForm = { ...form, city: cityName };
     for (let k in parsedForm) {
-      if (k !== 'latitude' && k !== 'longitude' && k !== 'avg_daily_consumption_kwh') {
+      if (k !== 'latitude' && k !== 'longitude' && k !== 'avg_daily_consumption_kwh' && k !== 'city') {
         parsedForm[k] = parsedForm[k] === '' ? 0 : parseFloat(parsedForm[k]) || 0;
       }
     }

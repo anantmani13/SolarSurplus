@@ -3,10 +3,12 @@ import { logoutUser } from '../services/firebase';
 
 export default function Navbar({ user, activeTab, onTabChange }) {
   const handleLogout = async () => {
-    try {
-      await logoutUser();
-    } catch (err) {
-      console.error('Logout error:', err);
+    if (window.confirm("Are you sure you want to log out?")) {
+      try {
+        await logoutUser();
+      } catch (err) {
+        console.error('Logout error:', err);
+      }
     }
   };
 

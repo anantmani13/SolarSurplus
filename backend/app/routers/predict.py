@@ -77,6 +77,7 @@ async def generate_forecast(user_input: UserInput):
                 estimated_consumption_kwh=sched["consumption_kwh"],
                 surplus_kwh=sched["surplus_kwh"],
                 battery_action=sched["battery_action"],
+                grid_export_kwh=sched.get("grid_export_kwh", 0.0),
                 battery_charge_kwh=sched["battery_charge_kwh"],
                 battery_soc_percent=sched["battery_soc_percent"],
             ))

@@ -618,6 +618,31 @@ body::before {
   color: var(--amber-400);
 }
 
+.notification-icon.info {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--blue-400);
+}
+
+.notification-icon.success {
+  background: var(--emerald-glow);
+  color: var(--emerald-400);
+}
+
+.notification-icon.critical {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red-400);
+}
+
+.notification-item.severity-critical { border-color: rgba(239, 68, 68, 0.3); }
+.notification-item.severity-warning { border-color: rgba(245, 158, 11, 0.25); }
+.notification-item.severity-success { border-color: rgba(16, 185, 129, 0.2); }
+
+.severity-badge {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+}
+
 .notification-content h4 {
   font-size: 14px;
   font-weight: 600;
@@ -722,6 +747,41 @@ body::before {
   border-radius: var(--radius-sm);
   font-size: 14px;
   margin-bottom: 16px;
+}
+
+.btn-google {
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.btn-google:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+.btn-google:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
 }
 
 /* ─── Loading Spinner ────────────────────────────────────── */

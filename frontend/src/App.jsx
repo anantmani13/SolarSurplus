@@ -15,6 +15,7 @@ import WeatherPanel from './components/WeatherPanel';
 import Recommendations from './components/Recommendations';
 import NotificationCenter from './components/NotificationCenter';
 import UserHistory from './components/UserHistory';
+import GridExportCard from './components/GridExportCard';
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
@@ -102,6 +103,10 @@ export default function App() {
     ? predictions.hourly_forecast[predictions.hourly_forecast.length - 1]
     : null;
 
+  // Location for tariff/net-metering features (latest input, or stored prediction)
+  const dashboardLocation =
+    lastInput || predictions?.location || null;
+
   // Get current battery action
   const currentAction = predictions?.hourly_forecast?.find(h => {
     const hDate = new Date(h.timestamp);
@@ -185,6 +190,16 @@ export default function App() {
                 
                 <StatCards summary={predictions.daily_summary} />
 
+                {predictions.daily_summary && (
+                  <div style={{ marginTop: 24 }}>
+                    <GridExportCard
+                      summary={predictions.daily_summary}
+                      latitude={dashboardLocation?.latitude}
+                      longitude={dashboardLocation?.longitude}
+                    />
+                  </div>
+                )}
+
                 <div style={{ marginTop: 24 }}>
                   <ForecastChart
                     data={predictions.hourly_forecast}
@@ -236,7 +251,7 @@ export default function App() {
         {/* ─── Notifications Tab ─────────────────────── */}
         {activeTab === 'notifications' && (
           <div style={{ maxWidth: 800, margin: '0 auto' }}>
-            <NotificationCenter predictions={predictions} />
+            <NotificationCenter predictions={predictions} location={dashboardLocation} />
           </div>
         )}
 

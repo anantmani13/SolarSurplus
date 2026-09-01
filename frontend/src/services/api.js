@@ -59,6 +59,7 @@ function generateClientFallbackForecast(userInput) {
   let totalConsumed = 0;
   let totalSurplus = 0;
   let totalDeficit = 0;
+  let totalGridExport = 0;
 
   for (let i = 0; i < 168; i++) {
     const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
@@ -106,13 +107,19 @@ function generateClientFallbackForecast(userInput) {
     const deficit = Math.max(0, -net);
 
     let action = 'idle';
+    let exportKwh = 0;
+    let batteryChargeKwh = 0;
     if (surplus > 0) {
       const canCharge = usableBatteryKwh - currentChargeKwh;
       const actualCharge = Math.min(surplus * 0.95, canCharge);
       if (actualCharge > 0.01) {
         currentChargeKwh += actualCharge;
+        batteryChargeKwh = actualCharge;
         action = 'charge';
       }
+      // Surplus that can't be stored (battery full / capacity exceeded) → grid export
+      exportKwh = Math.max(0, surplus - actualCharge / 0.95);
+      totalGridExport += exportKwh;
       totalSurplus += surplus;
     } else if (deficit > 0) {
       const available = (currentChargeKwh - minChargeKwh) * 0.95;
@@ -142,6 +149,8 @@ function generateClientFallbackForecast(userInput) {
       estimated_consumption_kwh: +consKwh.toFixed(3),
       surplus_kwh: +surplus.toFixed(3),
       battery_action: action,
+      battery_charged_kwh: +batteryChargeKwh.toFixed(3),
+      grid_export_kwh: +exportKwh.toFixed(3),
       battery_charge_kwh: +currentChargeKwh.toFixed(2),
       battery_soc_percent: +(usableBatteryKwh > 0 ? (currentChargeKwh / usableBatteryKwh) * 100 : 0).toFixed(1),
     });
@@ -149,18 +158,76 @@ function generateClientFallbackForecast(userInput) {
 
   const selfSuffPercent = Math.min(100, (totalGenerated / Math.max(totalConsumed, 0.01)) * 100);
   const dailySurplus = totalSurplus / 7;
+  const dailyExport = totalGridExport / 7;
+  const days = 7;
 
-  const recs = [
-    `☀️ Peak solar generation: 10:00 – 15:00. Schedule high-consumption appliances during midday solar peak.`,
-    `🔋 Optimal battery discharge: Early morning (06:00) and evening peak hours (18:00 – 22:00).`,
-    selfSuffPercent >= 100
-      ? `✅ Your solar system generates ${selfSuffPercent.toFixed(0)}% of your energy needs with net surplus!`
-      : `⚡ Solar covers ${selfSuffPercent.toFixed(0)}% of your consumption. Battery storage optimizes self-consumption.`,
-  ];
+  // ── Smart Insights: surplus usage & net-metering recommendations ──
+  const recs = [];
+
+  recs.push({
+    category: 'Energy Optimization',
+    icon: 'Sun',
+    title: 'Shift heavy loads to solar peak',
+    message: `Peak solar generation is 10:00 – 15:00 (up to ~${Math.max(...hourlyForecast.map(h => h.predicted_generation_kwh)).toFixed(1)} kWh/hr). Run washing machines, dishwashers and ACs during midday solar peak to use free energy.`,
+  });
+
+  recs.push({
+    category: 'Energy Optimization',
+    icon: 'Battery',
+    title: 'Optimal battery discharge windows',
+    message: 'Discharge battery during early morning (06:00) and evening peaks (18:00 – 22:00) when grid power is most expensive.',
+  });
+
+  if (selfSuffPercent >= 100) {
+    recs.push({
+      category: 'Energy Optimization',
+      icon: 'Check',
+      title: 'Fully self-sufficient system',
+      message: `Your solar system generates ${selfSuffPercent.toFixed(0)}% of your energy needs with net surplus — you're energy independent!`,
+    });
+  } else {
+    recs.push({
+      category: 'Energy Optimization',
+      icon: 'Sun',
+      title: 'Boost self-sufficiency',
+      message: `Solar covers ${selfSuffPercent.toFixed(0)}% of your consumption. Expanding panel capacity or trimming evening usage will raise this further.`,
+    });
+  }
+
+  if (dailyExport > 0.5) {
+    const tariff = 3.0; // default export credit ₹/kWh (state tariff applied in Grid Export card)
+    const monthly = dailyExport * 30;
+    const yearly = dailyExport * 365;
+    recs.push({
+      category: 'Surplus Usage',
+      icon: 'Zap',
+      title: 'Export surplus to the grid',
+      message: `You have ~${dailyExport.toFixed(1)} kWh/day of exportable surplus. Under PM Surya Ghar net metering this could earn ₹${monthly.toFixed(0)}/month (≈ ₹${yearly.toFixed(0)}/year) at ₹${tariff.toFixed(2)}/kWh.`,
+    });
+  } else if (dailySurplus > 0.5) {
+    recs.push({
+      category: 'Surplus Usage',
+      icon: 'Zap',
+      title: 'Charge EV during surplus hours',
+      message: `Daily surplus is ~${dailySurplus.toFixed(1)} kWh. Charge your EV or run the water heater between 11 AM – 3 PM when surplus peaks.`,
+    });
+  }
 
   if (dailySurplus > usableBatteryKwh * 0.5) {
-    recs.push(`📈 Daily surplus (${dailySurplus.toFixed(1)} kWh) exceeds 50% of battery capacity. Increasing battery size will store even more excess.`);
+    recs.push({
+      category: 'Energy Optimization',
+      icon: 'TrendingUp',
+      title: 'Battery too small for your surplus',
+      message: `Daily surplus (${dailySurplus.toFixed(1)} kWh) exceeds 50% of battery capacity. A larger battery stores more free energy before it's lost to the grid.`,
+    });
   }
+
+  recs.push({
+    category: 'Government Schemes',
+    icon: 'Badge',
+    title: 'PM Surya Ghar: Muft Bijli Yojana',
+    message: 'This scheme subsidises rooftop solar (up to ₹78,000) and pays for surplus energy exported to the grid. See the Grid Export card for your state tariff.',
+  });
 
   return {
     location: {
@@ -181,12 +248,13 @@ function generateClientFallbackForecast(userInput) {
       total_consumption_kwh: +totalConsumed.toFixed(2),
       total_surplus_kwh: +totalSurplus.toFixed(2),
       total_deficit_kwh: +totalDeficit.toFixed(2),
+      grid_export_kwh: +totalGridExport.toFixed(2),
       net_energy_kwh: +(totalGenerated - totalConsumed).toFixed(2),
       self_sufficiency_percent: +selfSuffPercent.toFixed(1),
       final_battery_soc_percent: +(usableBatteryKwh > 0 ? (currentChargeKwh / usableBatteryKwh) * 100 : 0).toFixed(1),
       usable_battery_capacity_kwh: +usableBatteryKwh.toFixed(2),
       battery_degradation_percent: +((1 - batteryDegradation) * 100).toFixed(1),
-      forecast_days: 7,
+      forecast_days: days,
     },
     recommendations: recs,
     model_used: 'PV Physics & Solar Optimizer Engine (Resilient Engine)',

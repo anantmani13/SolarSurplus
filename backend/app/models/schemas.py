@@ -42,6 +42,7 @@ class HourlyForecast(BaseModel):
     estimated_consumption_kwh: float
     surplus_kwh: float
     battery_action: str  # "charge", "discharge", "idle"
+    grid_export_kwh: float = 0.0  # Surplus exported to grid (battery full)
     battery_charge_kwh: float
     battery_soc_percent: float
 

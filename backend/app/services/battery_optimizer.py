@@ -59,6 +59,7 @@ def calculate_battery_schedule(
     total_deficit = 0
     total_generated = 0
     total_consumed = 0
+    total_grid_export = 0
 
     hours_in_forecast = len(hourly_generation)
     num_days = max(1, hours_in_forecast / 24)
@@ -76,6 +77,7 @@ def calculate_battery_schedule(
 
         action = "idle"
         energy_flow = 0.0
+        grid_export = 0.0
 
         if surplus > 0:
             # Charge battery with surplus (95% charging efficiency)
@@ -87,6 +89,9 @@ def calculate_battery_schedule(
                 charge_kwh += actual_charge
                 action = "charge"
                 energy_flow = actual_charge
+            # Surplus that can't be stored (battery full) → export to grid
+            grid_export = max(0.0, surplus - actual_charge / charge_efficiency)
+            total_grid_export += grid_export
             total_surplus += surplus
 
         elif deficit > 0:
@@ -115,6 +120,7 @@ def calculate_battery_schedule(
             "deficit_kwh": round(deficit, 3),
             "battery_action": action,
             "energy_flow_kwh": round(energy_flow, 3),
+            "grid_export_kwh": round(grid_export, 3),
             "battery_charge_kwh": round(charge_kwh, 3),
             "battery_soc_percent": round(soc_percent, 1),
         })
@@ -124,6 +130,7 @@ def calculate_battery_schedule(
         schedule, total_surplus, total_deficit,
         total_generated, total_consumed,
         usable_capacity, charge_kwh, num_days,
+        total_grid_export,
     )
 
     # Daily summary
@@ -132,6 +139,7 @@ def calculate_battery_schedule(
         "total_consumption_kwh": round(total_consumed, 2),
         "total_surplus_kwh": round(total_surplus, 2),
         "total_deficit_kwh": round(total_deficit, 2),
+        "grid_export_kwh": round(total_grid_export, 2),
         "net_energy_kwh": round(total_generated - total_consumed, 2),
         "self_sufficiency_percent": round(
             min(100, (total_generated / max(total_consumed, 0.01)) * 100), 1
@@ -160,6 +168,7 @@ def _generate_recommendations(
     usable_capacity: float,
     final_charge: float,
     num_days: float,
+    total_grid_export: float = 0.0,
 ) -> list[str]:
     """Generate actionable recommendations based on forecast."""
     recs = []
@@ -215,6 +224,15 @@ def _generate_recommendations(
         recs.append(
             f"📈 Daily surplus ({daily_surplus:.1f} kWh) exceeds 50% of battery capacity. "
             "A larger battery could capture more free energy."
+        )
+
+    # Net metering / grid export advice
+    daily_export = total_grid_export / max(num_days, 1)
+    if daily_export > 0.5:
+        recs.append(
+            f"🔌 You have ~{daily_export:.1f} kWh/day of exportable surplus "
+            f"(≈₹{daily_export * 30 * 3.0:.0f}/month at ₹3.00/kWh). "
+            "Enroll in net metering under PM Surya Ghar to earn from it."
         )
 
     return recs

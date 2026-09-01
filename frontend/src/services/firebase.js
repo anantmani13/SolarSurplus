@@ -12,6 +12,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -63,6 +65,13 @@ export async function registerUser(email, password) {
 export async function loginUser(email, password) {
   if (!auth) throw new Error('Firebase not configured');
   const cred = await signInWithEmailAndPassword(auth, email, password);
+  return cred.user;
+}
+
+export async function loginWithGoogle() {
+  if (!auth) throw new Error('Firebase not configured');
+  const provider = new GoogleAuthProvider();
+  const cred = await signInWithPopup(auth, provider);
   return cred.user;
 }
 

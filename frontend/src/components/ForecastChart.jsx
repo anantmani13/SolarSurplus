@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {
   ComposedChart, AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend
+  Tooltip, ResponsiveContainer, Legend, ReferenceLine
 } from 'recharts';
-import { Zap, Sun, Wind } from 'lucide-react';
+import { Zap, Sun, Wind, TrendingUp } from 'lucide-react';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -27,7 +27,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function ForecastChart({ data, title = 'Solar Forecast & Irradiance' }) {
-  const [viewMode, setViewMode] = useState('power'); // 'power' | 'weather'
+  const [viewMode, setViewMode] = useState('power'); // 'power' | 'weather' | 'export'
 
   if (!data?.length) return null;
 
@@ -39,6 +39,8 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
     Generation: entry.predicted_generation_kwh || entry.generation_kwh || 0,
     Consumption: entry.estimated_consumption_kwh || entry.consumption_kwh || 0,
     Surplus: Math.max(0, (entry.surplus_kwh || 0)),
+    NetExport: entry.grid_export_kwh || 0,
+    BatterySoC: entry.battery_soc_percent || 0,
     GHI: entry.ghi || 0,
     DNI: entry.dni || Math.round((entry.ghi || 0) * 0.85),
     Temp: entry.temperature || 0,
@@ -93,6 +95,26 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
           >
             <Sun size={13} /> Irradiance & Weather
           </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('export')}
+            style={{
+              padding: '5px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              borderRadius: 6,
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              background: viewMode === 'export' ? 'var(--blue-500)' : 'transparent',
+              color: viewMode === 'export' ? '#fff' : 'var(--text-muted)',
+              transition: 'all 0.2s',
+            }}
+          >
+            <TrendingUp size={13} /> Net Export
+          </button>
         </div>
       </div>
 
@@ -119,7 +141,7 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
               <Area type="monotone" dataKey="Surplus" stroke="#3B82F6" fill="url(#gradSurplus)" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#3B82F6' }} unit=" kWh" />
               <Line type="monotone" dataKey="Consumption" stroke="#F59E0B" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#F59E0B' }} unit=" kWh" />
             </ComposedChart>
-          ) : (
+          ) : viewMode === 'weather' ? (
             <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradGHI" x1="0" y1="0" x2="0" y2="1">
@@ -138,6 +160,25 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
               <Line yAxisId="right" type="monotone" dataKey="CellTemp" name="PV Cell Temp" stroke="#EF4444" strokeWidth={2} dot={false} unit=" °C" />
               <Line yAxisId="right" type="monotone" dataKey="Temp" name="Air Temp" stroke="#38BDF8" strokeWidth={1.5} dot={false} unit=" °C" />
               <Line yAxisId="right" type="monotone" dataKey="Wind" name="Wind Speed" stroke="#A7F3D0" strokeWidth={1.5} strokeDasharray="3 3" dot={false} unit=" m/s" />
+            </ComposedChart>
+          ) : (
+            <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradExport" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#60A5FA" stopOpacity={0.45} />
+                  <stop offset="95%" stopColor="#60A5FA" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+              <YAxis yAxisId="left" stroke="#60A5FA" tick={{ fontSize: 11 }} unit=" kWh" label={{ value: 'Grid Export (kWh)', angle: -90, position: 'insideLeft', style: { fill: '#60A5FA', fontSize: 11 } }} />
+              <YAxis yAxisId="right" orientation="right" stroke="#A78BFA" tick={{ fontSize: 11 }} domain={[0, 100]} unit=" %" label={{ value: 'Battery SoC', angle: 90, position: 'insideRight', style: { fill: '#A78BFA', fontSize: 11 } }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13 }} />
+              <ReferenceLine yAxisId="right" y={100} stroke="#A78BFA" strokeDasharray="6 4" strokeOpacity={0.6} label={{ value: 'Battery Full', position: 'insideTopRight', fill: '#A78BFA', fontSize: 11 }} />
+              <Area yAxisId="left" type="monotone" dataKey="NetExport" name="Surplus Exported to Grid" stroke="#3B82F6" fill="url(#gradExport)" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#3B82F6' }} unit=" kWh" />
+              <Area yAxisId="left" type="monotone" dataKey="Surplus" name="Total Surplus" stroke="#34D399" strokeWidth={1.5} strokeDasharray="4 3" strokeOpacity={0.7} fill="none" dot={false} unit=" kWh" />
+              <Line yAxisId="right" type="monotone" dataKey="BatterySoC" name="Battery SoC" stroke="#A78BFA" strokeWidth={2} dot={false} unit=" %" />
             </ComposedChart>
           )}
         </ResponsiveContainer>

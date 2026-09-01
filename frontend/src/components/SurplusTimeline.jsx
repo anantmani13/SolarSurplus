@@ -1,11 +1,10 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell, Legend
+  Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
-  const entry = payload[0]?.payload;
   return (
     <div style={{
       background: 'rgba(17, 24, 39, 0.95)',
@@ -17,14 +16,13 @@ const CustomTooltip = ({ active, payload, label }) => {
       <p style={{ fontWeight: 600, marginBottom: 8, color: '#f1f5f9' }}>
         {label}
       </p>
-      <p style={{ color: '#10B981', fontSize: 13 }}>
-        Surplus: <strong>{entry?.surplus?.toFixed(2)} kWh</strong>
-      </p>
-      <p style={{ color: '#EF4444', fontSize: 13 }}>
-        Deficit: <strong>{entry?.deficit?.toFixed(2)} kWh</strong>
-      </p>
-      <p style={{ color: '#60A5FA', fontSize: 13 }}>
-        Battery: <strong>{entry?.battery_soc?.toFixed(0)}%</strong> ({entry?.action})
+      {payload.map((p, i) => (
+        <p key={i} style={{ color: p.color, fontSize: 13, marginBottom: 4 }}>
+          {p.name}: <strong>{Number(p.value).toFixed(2)} kWh</strong>
+        </p>
+      ))}
+      <p style={{ color: '#64748b', fontSize: 12, marginTop: 4 }}>
+        Battery SoC: <strong>{payload[0]?.payload?.battery_soc?.toFixed(0)}%</strong> ({payload[0]?.payload?.action})
       </p>
     </div>
   );
@@ -38,38 +36,50 @@ export default function SurplusTimeline({ data }) {
   data.forEach((entry) => {
     const h = entry.hour_of_day ?? (entry.hour % 24);
     if (!hourlyAgg[h]) {
-      hourlyAgg[h] = { surpluses: [], deficits: [], socs: [], actions: [] };
+      hourlyAgg[h] = {
+        surplus: [], stored: [], exported: [], wasted: [], deficits: [], socs: [], actions: [],
+      };
     }
-    hourlyAgg[h].surpluses.push(entry.surplus_kwh || 0);
+    const surplus = entry.surplus_kwh || 0;
+    const isCharge = entry.battery_action === 'charge';
+    const stored =
+      entry.battery_charged_kwh ??
+      (entry.energy_flow_kwh && entry.energy_flow_kwh > 0 ? entry.energy_flow_kwh : 0) ??
+      (isCharge ? surplus : 0);
+    const exported = entry.grid_export_kwh || 0;
+    const wasted = Math.max(0, surplus - stored - exported);
+
+    hourlyAgg[h].surplus.push(surplus);
+    hourlyAgg[h].stored.push(stored);
+    hourlyAgg[h].exported.push(exported);
+    hourlyAgg[h].wasted.push(wasted);
     hourlyAgg[h].deficits.push(entry.deficit_kwh || 0);
     hourlyAgg[h].socs.push(entry.battery_soc_percent || 0);
     hourlyAgg[h].actions.push(entry.battery_action || 'idle');
   });
 
+  const avg = (arr) => arr.reduce((a, b) => a + b, 0) / (arr.length || 1);
+
   const chartData = Object.keys(hourlyAgg)
     .sort((a, b) => Number(a) - Number(b))
     .map((h) => {
       const agg = hourlyAgg[h];
-      const avgSurplus = agg.surpluses.reduce((a, b) => a + b, 0) / agg.surpluses.length;
-      const avgDeficit = agg.deficits.reduce((a, b) => a + b, 0) / agg.deficits.length;
-      const avgSoc = agg.socs.reduce((a, b) => a + b, 0) / agg.socs.length;
-      const primaryAction = agg.actions.sort(
-        (a, b) => agg.actions.filter(x => x === b).length - agg.actions.filter(x => x === a).length
-      )[0];
-
       return {
         hour: `${String(h).padStart(2, '0')}:00`,
-        net: +(avgSurplus - avgDeficit).toFixed(3),
-        surplus: +avgSurplus.toFixed(3),
-        deficit: +avgDeficit.toFixed(3),
-        battery_soc: +avgSoc.toFixed(1),
-        action: primaryAction,
+        stored: +avg(agg.stored).toFixed(3),
+        exported: +avg(agg.exported).toFixed(3),
+        wasted: +avg(agg.wasted).toFixed(3),
+        deficit: +avg(agg.deficits).toFixed(3),
+        battery_soc: +avg(agg.socs).toFixed(1),
+        action: agg.actions.sort(
+          (a, b) => agg.actions.filter(x => x === b).length - agg.actions.filter(x => x === a).length
+        )[0],
       };
     });
 
   return (
     <div className="glass-card">
-      <h3 className="chart-title">Surplus / Deficit Timeline (Avg by Hour)</h3>
+      <h3 className="chart-title">Surplus Timeline — Stored vs Exported (Avg by Hour)</h3>
       <div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -77,15 +87,11 @@ export default function SurplusTimeline({ data }) {
             <XAxis dataKey="hour" stroke="#64748b" tick={{ fontSize: 11 }} />
             <YAxis stroke="#64748b" tick={{ fontSize: 11 }} label={{ value: 'kWh', angle: -90, position: 'insideLeft', style: { fill: '#64748b' } }} />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="net" radius={[4, 4, 0, 0]}>
-              {chartData.map((entry, idx) => (
-                <Cell
-                  key={idx}
-                  fill={entry.net >= 0 ? '#10B981' : '#EF4444'}
-                  fillOpacity={0.8}
-                />
-              ))}
-            </Bar>
+            <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13 }} />
+            <Bar dataKey="stored" name="Stored in Battery" stackId="surplus" fill="#10B981" radius={[0, 0, 0, 0]} maxBarSize={26} />
+            <Bar dataKey="exported" name="Exported to Grid" stackId="surplus" fill="#3B82F6" maxBarSize={26} />
+            <Bar dataKey="wasted" name="Wasted" stackId="surplus" fill="#F59E0B" radius={[4, 4, 0, 0]} maxBarSize={26} />
+            <Bar dataKey="deficit" name="Grid Draw (deficit)" fill="#EF4444" fillOpacity={0.35} maxBarSize={26} />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Zap, Sun, Battery, RotateCcw, MapPin } from 'lucide-react';
 import { getUserEntries } from '../services/firebase';
+import { reverseGeocode, formatCoordinates } from '../services/geo';
 
 export default function UserHistory({ user, onRestore }) {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [geoCache, setGeoCache] = useState({});
 
   useEffect(() => {
     if (!user) return;
@@ -22,6 +24,34 @@ export default function UserHistory({ user, onRestore }) {
     
     fetchHistory();
   }, [user]);
+
+  // Reverse-geocode older entries that were saved without a city name
+  useEffect(() => {
+    if (!entries.length) return;
+    let cancelled = false;
+
+    entries.forEach(async (entry) => {
+      if (entry.id && geoCache[entry.id]) return;
+      if (entry.city) return;
+      const lat = entry.latitude;
+      const lon = entry.longitude;
+      if (lat == null || lon == null) return;
+      const geo = await reverseGeocode(lat, lon);
+      if (cancelled) return;
+      const label = geo?.locality
+        ? `${geo.locality}${geo.state ? `, ${geo.state}` : ''}`
+        : formatCoordinates(lat, lon);
+      setGeoCache((prev) => ({ ...prev, [entry.id]: label }));
+    });
+
+    return () => { cancelled = true; };
+  }, [entries]);
+
+  const resolveCity = (entry) => {
+    if (entry.city) return entry.city;
+    if (geoCache[entry.id]) return geoCache[entry.id];
+    return formatCoordinates(entry.latitude, entry.longitude) || 'Unknown';
+  };
 
   if (loading) {
     return (
@@ -58,7 +88,7 @@ export default function UserHistory({ user, onRestore }) {
                   })}
                 </div>
                 <div style={{ fontSize: '1.1rem', fontWeight: 500 }}>
-                  {entry.city}
+                  {resolveCity(entry)}
                 </div>
               </div>
               <button 
@@ -71,7 +101,7 @@ export default function UserHistory({ user, onRestore }) {
               </button>
             </div>
             
-            <div className="grid-2" style={{ gap: 12 }}>
+            <div className="grid-4" style={{ gap: 12 }}>
               <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8 }}>
                 <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 4 }}>
                   <Sun size={12} style={{ display: 'inline', marginRight: 4 }} /> Solar Panel
@@ -96,7 +126,7 @@ export default function UserHistory({ user, onRestore }) {
                 <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 4 }}>
                   <MapPin size={12} style={{ display: 'inline', marginRight: 4 }} /> Location
                 </div>
-                <div style={{ fontWeight: 500 }}>{entry.city || 'Unknown'}</div>
+                <div style={{ fontWeight: 500 }}>{resolveCity(entry)}</div>
               </div>
             </div>
           </div>

@@ -118,7 +118,7 @@ class SolarPredictor:
 
             self._loaded = True
         except Exception as e:
-            print(f"[PREDICTOR] Warning: Could not load models: {e}")
+            print(f"[PREDICTOR] Warning: Could not load models: {repr(e)}", flush=True)
             print("[PREDICTOR] Falling back to physics-based estimation")
 
     def _build_feature_matrix(self, weather_data: list[dict]) -> np.ndarray:

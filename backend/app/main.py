@@ -40,6 +40,7 @@ app.add_middleware(
 # Mount routers
 app.include_router(predict.router, prefix="/api/predict", tags=["Predictions"])
 app.include_router(weather.router, prefix="/api/weather", tags=["Weather"])
+app.include_router(debug.router, prefix="/api/debug", tags=["Debug"])
 
 
 @app.get("/")

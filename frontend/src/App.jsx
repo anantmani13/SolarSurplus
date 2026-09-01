@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { useAuth } from './hooks/useAuth';
 import { generateForecast } from './services/api';

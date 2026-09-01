@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Zap, Sun, Battery, RotateCcw } from 'lucide-react';
+import { Calendar, Zap, Sun, Battery, RotateCcw, MapPin } from 'lucide-react';
 import { getUserEntries } from '../services/firebase';
 
 export default function UserHistory({ user, onRestore }) {
@@ -91,6 +91,12 @@ export default function UserHistory({ user, onRestore }) {
                   <Zap size={12} style={{ display: 'inline', marginRight: 4 }} /> Daily Use
                 </div>
                 <div style={{ fontWeight: 500 }}>{entry.avg_daily_consumption_kwh} kWh</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8 }}>
+                <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 4 }}>
+                  <MapPin size={12} style={{ display: 'inline', marginRight: 4 }} /> Location
+                </div>
+                <div style={{ fontWeight: 500 }}>{entry.city || 'Unknown'}</div>
               </div>
             </div>
           </div>

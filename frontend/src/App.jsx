@@ -24,6 +24,15 @@ export default function App() {
   const [forecastLoading, setForecastLoading] = useState(false);
   const [lastInput, setLastInput] = useState(null);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('solar_predictions');
+    if (saved) {
+      try {
+        setPredictions(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
+
   const handleForecast = useCallback(async (formData) => {
     setForecastLoading(true);
     try {
@@ -31,6 +40,9 @@ export default function App() {
       setPredictions(result);
       setLastInput(formData);
       setActiveTab('dashboard');
+      
+      // Save to local storage to persist across refresh
+      localStorage.setItem('solar_predictions', JSON.stringify(result));
 
       toast.success('Forecast generated successfully!', {
         style: {
@@ -41,25 +53,21 @@ export default function App() {
         iconTheme: { primary: '#10B981', secondary: '#fff' },
       });
 
-      // Save to Firebase if authenticated
+      // Save to Firebase if authenticated (fire and forget to avoid blocking UI)
       if (user) {
-        try {
-          await saveUserEntry(user.uid, formData);
-          await savePrediction(user.uid, {
-            daily_summary: result.daily_summary,
-            model_used: result.model_used,
-            input: formData,
-          });
-          // Save surplus notification
-          if (result.daily_summary?.total_surplus_kwh > 0) {
-            await saveNotification(user.uid, {
-              type: 'surplus',
-              title: 'Surplus Energy Detected',
-              message: `${result.daily_summary.total_surplus_kwh.toFixed(1)} kWh surplus forecasted`,
-            });
-          }
-        } catch (err) {
-          console.warn('Firebase save error (non-blocking):', err);
+        saveUserEntry(user.uid, formData).catch(e => console.warn(e));
+        savePrediction(user.uid, {
+          daily_summary: result.daily_summary,
+          model_used: result.model_used,
+          input: formData,
+        }).catch(e => console.warn(e));
+        
+        if (result.daily_summary?.total_surplus_kwh > 0) {
+          saveNotification(user.uid, {
+            type: 'surplus',
+            title: 'Surplus Energy Detected',
+            message: `${result.daily_summary.total_surplus_kwh.toFixed(1)} kWh surplus forecasted`,
+          }).catch(e => console.warn(e));
         }
       }
     } catch (err) {
@@ -158,6 +166,23 @@ export default function App() {
           <div className="fade-in">
             {predictions ? (
               <>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    background: 'rgba(139, 92, 246, 0.15)',
+                    color: '#a78bfa',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    Prediction Engine: {predictions.model_used}
+                  </span>
+                </div>
+                
                 <StatCards summary={predictions.daily_summary} />
 
                 <div style={{ marginTop: 24 }}>

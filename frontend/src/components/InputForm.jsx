@@ -101,12 +101,20 @@ export default function InputForm({ onSubmit, loading }) {
   };
 
   const handleChange = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: parseFloat(value) || 0 }));
+    setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    
+    // Parse values to floats on submit to avoid 0 sticking in inputs
+    const parsedForm = { ...form };
+    for (let k in parsedForm) {
+      if (k !== 'latitude' && k !== 'longitude' && k !== 'avg_daily_consumption_kwh') {
+        parsedForm[k] = parsedForm[k] === '' ? 0 : parseFloat(parsedForm[k]) || 0;
+      }
+    }
+    onSubmit(parsedForm);
   };
 
   const handleGeolocate = () => {
@@ -158,8 +166,9 @@ export default function InputForm({ onSubmit, loading }) {
             <input
               type="number"
               className="form-input"
-              value={form.solar_panel_capacity_kw}
+              value={form.solar_panel_capacity_kw === 0 && form.solar_panel_capacity_kw !== '' ? '' : form.solar_panel_capacity_kw}
               onChange={(e) => handleChange('solar_panel_capacity_kw', e.target.value)}
+              onWheel={(e) => e.target.blur()}
               min="0.1"
               step="0.1"
               required
@@ -176,8 +185,9 @@ export default function InputForm({ onSubmit, loading }) {
             <input
               type="number"
               className="form-input"
-              value={form.battery_capacity_kwh}
+              value={form.battery_capacity_kwh === 0 && form.battery_capacity_kwh !== '' ? '' : form.battery_capacity_kwh}
               onChange={(e) => handleChange('battery_capacity_kwh', e.target.value)}
+              onWheel={(e) => e.target.blur()}
               min="0.1"
               step="0.1"
               required
@@ -194,8 +204,9 @@ export default function InputForm({ onSubmit, loading }) {
             <input
               type="number"
               className="form-input"
-              value={form.current_battery_charge}
+              value={form.current_battery_charge === 0 && form.current_battery_charge !== '' ? '' : form.current_battery_charge}
               onChange={(e) => handleChange('current_battery_charge', e.target.value)}
+              onWheel={(e) => e.target.blur()}
               min="0"
               max="100"
               required
@@ -234,8 +245,9 @@ export default function InputForm({ onSubmit, loading }) {
             <input
               type="number"
               className="form-input"
-              value={form.panel_age_years}
+              value={form.panel_age_years === 0 && form.panel_age_years !== '' ? '' : form.panel_age_years}
               onChange={(e) => handleChange('panel_age_years', e.target.value)}
+              onWheel={(e) => e.target.blur()}
               min="0"
               step="0.5"
             />
@@ -251,8 +263,9 @@ export default function InputForm({ onSubmit, loading }) {
             <input
               type="number"
               className="form-input"
-              value={form.battery_age_years}
+              value={form.battery_age_years === 0 && form.battery_age_years !== '' ? '' : form.battery_age_years}
               onChange={(e) => handleChange('battery_age_years', e.target.value)}
+              onWheel={(e) => e.target.blur()}
               min="0"
               step="0.5"
             />
@@ -371,6 +384,7 @@ export default function InputForm({ onSubmit, loading }) {
                 placeholder="Latitude"
                 value={form.latitude}
                 onChange={(e) => handleChange('latitude', e.target.value)}
+                onWheel={(e) => e.target.blur()}
                 min="-90"
                 max="90"
                 step="0.0001"
@@ -385,6 +399,7 @@ export default function InputForm({ onSubmit, loading }) {
                 placeholder="Longitude"
                 value={form.longitude}
                 onChange={(e) => handleChange('longitude', e.target.value)}
+                onWheel={(e) => e.target.blur()}
                 min="-180"
                 max="180"
                 step="0.0001"

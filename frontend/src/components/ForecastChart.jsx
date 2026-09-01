@@ -133,7 +133,7 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+              <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval={6} angle={-28} height={56} textAnchor="end" />
               <YAxis stroke="#64748b" tick={{ fontSize: 11 }} unit=" kWh" />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13 }} />
@@ -150,7 +150,7 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+              <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval={6} angle={-28} height={56} textAnchor="end" />
               <YAxis yAxisId="left" stroke="#F59E0B" tick={{ fontSize: 11 }} unit=" W/m²" />
               <YAxis yAxisId="right" orientation="right" stroke="#38BDF8" tick={{ fontSize: 11 }} unit=" °C/ms" />
               <Tooltip content={<CustomTooltip />} />
@@ -170,7 +170,7 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+              <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval={6} angle={-28} height={56} textAnchor="end" />
               <YAxis yAxisId="left" stroke="#60A5FA" tick={{ fontSize: 11 }} unit=" kWh" label={{ value: 'Grid Export (kWh)', angle: -90, position: 'insideLeft', style: { fill: '#60A5FA', fontSize: 11 } }} />
               <YAxis yAxisId="right" orientation="right" stroke="#A78BFA" tick={{ fontSize: 11 }} domain={[0, 100]} unit=" %" label={{ value: 'Battery SoC', angle: 90, position: 'insideRight', style: { fill: '#A78BFA', fontSize: 11 } }} />
               <Tooltip content={<CustomTooltip />} />

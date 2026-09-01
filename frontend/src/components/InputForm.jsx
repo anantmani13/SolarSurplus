@@ -3,6 +3,7 @@ import {
   Sun, Battery, MapPin, Calendar, Gauge,
   Zap, ArrowRight, Loader2, Search, Check
 } from 'lucide-react';
+import { reverseGeocode, formatLocationName } from '../services/geo';
 
 const DEFAULT_VALUES = {
   solar_panel_capacity_kw: 5,
@@ -24,6 +25,17 @@ export default function InputForm({ onSubmit, loading }) {
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
+  // Resolve lat/lon into a real, readable place name (BigDataCloud, free)
+  const applyGeoName = async (lat, lon) => {
+    const geo = await reverseGeocode(lat, lon);
+    const name = formatLocationName(geo);
+    if (name) {
+      setCityName(name);
+    } else {
+      setCityName(`${lat}°N, ${lon}°E`);
+    }
+  };
+
   // Auto-detect location on mount
   useEffect(() => {
     if (navigator.geolocation) {
@@ -38,19 +50,7 @@ export default function InputForm({ onSubmit, loading }) {
             longitude: lon,
           }));
           setGeoStatus('success');
-
-          // Reverse geocode to get city name
-          try {
-            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${lat},${lon}&count=1&language=en&format=json`);
-            const data = await res.json();
-            if (data?.results?.[0]?.name) {
-              setCityName(`${data.results[0].name}, ${data.results[0].country || ''}`);
-            } else {
-              setCityName(`${lat}°N, ${lon}°E`);
-            }
-          } catch {
-            setCityName(`${lat}°N, ${lon}°E`);
-          }
+          await applyGeoName(lat, lon);
         },
         () => {
           setGeoStatus('failed');
@@ -130,7 +130,7 @@ export default function InputForm({ onSubmit, loading }) {
             longitude: lon,
           }));
           setGeoStatus('success');
-          setCityName(`GPS: ${lat}°N, ${lon}°E`);
+          await applyGeoName(lat, lon);
         },
         (err) => {
           console.error('Geolocation error:', err);

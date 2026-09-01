@@ -12,7 +12,8 @@ export async function reverseGeocode(latitude, longitude) {
     if (!res.ok) throw new Error(`Reverse geocode failed: ${res.status}`);
     const data = await res.json();
     return {
-      locality: data.locality || data.city || data.principalSubdivision || '',
+      locality: data.locality || data.city || data.district || '',
+      district: data.district || '',
       state: data.principalSubdivision || '',
       country: data.countryName || data.country_code || '',
     };
@@ -20,6 +21,16 @@ export async function reverseGeocode(latitude, longitude) {
     console.warn('Reverse geocode failed:', err);
     return null;
   }
+}
+
+export function formatLocationName(geo) {
+  if (!geo) return null;
+  const parts = [];
+  for (const key of ['locality', 'district', 'state', 'country']) {
+    const value = (geo[key] || '').trim();
+    if (value && parts[parts.length - 1] !== value) parts.push(value);
+  }
+  return parts.join(', ') || null;
 }
 
 export function formatCoordinates(latitude, longitude) {

@@ -567,6 +567,203 @@ body::before {
 .battery-status.discharging { color: var(--amber-400); }
 .battery-status.idle { color: var(--blue-400); }
 
+/* ─── Battery Live UI ────────────────────────────────────── */
+.battery-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.battery-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.battery-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: batteryDotPulse 1.6s ease-in-out infinite;
+}
+.battery-dot.idle { animation: none; }
+
+@keyframes batteryDotPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.battery-visual { max-width: 220px; margin: 0 auto; }
+
+.battery-outer.charging { box-shadow: 0 0 46px rgba(16, 185, 129, 0.35), inset 0 0 24px rgba(16, 185, 129, 0.12); }
+.battery-outer.discharging { box-shadow: 0 0 46px rgba(245, 158, 11, 0.3), inset 0 0 24px rgba(245, 158, 11, 0.12); }
+.battery-outer.low { box-shadow: 0 0 46px rgba(239, 68, 68, 0.32); }
+.battery-outer.idle { box-shadow: 0 0 30px rgba(59, 130, 246, 0.16); }
+
+.battery-fill { overflow: hidden; }
+
+.battery-fill-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 100%, rgba(255, 255, 255, 0.18), transparent 60%);
+  z-index: 1;
+}
+
+.battery-wave {
+  position: absolute;
+  left: -50%;
+  right: -50%;
+  top: -26px;
+  height: 46px;
+  border-radius: 42%;
+  pointer-events: none;
+  will-change: transform;
+}
+.battery-wave-a { background: rgba(255, 255, 255, 0.5); animation: batteryWave 5s linear infinite; }
+.battery-wave-b { background: rgba(255, 255, 255, 0.28); animation: batteryWave 7s linear infinite reverse; }
+
+@keyframes batteryWave {
+  from { transform: rotate(0deg) translateY(0); }
+  to { transform: rotate(360deg) translateY(-6px); }
+}
+
+.battery-bubble {
+  position: absolute;
+  bottom: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  animation: batteryBubble 2.2s ease-in infinite;
+}
+@keyframes batteryBubble {
+  0% { transform: translateY(0); opacity: 0.6; }
+  80% { opacity: 0.15; }
+  100% { transform: translateY(-120px); opacity: 0; }
+}
+
+.battery-drip {
+  position: absolute;
+  top: 10px;
+  width: 6px;
+  height: 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.45);
+  animation: batteryDrip 2.2s ease-in infinite;
+}
+@keyframes batteryDrip {
+  0% { transform: translateY(0); opacity: 0.5; }
+  100% { transform: translateY(150px); opacity: 0; }
+}
+
+.battery-percent {
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.05;
+}
+.battery-percent span:first-child {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.battery-flowbar {
+  margin-top: 18px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.battery-flow-item {
+  flex: 1;
+  text-align: center;
+  padding: 10px 6px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+/* ─── Live Cursor Background ─────────────────────────────── */
+.live-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.live-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.55;
+  will-change: transform;
+}
+
+.live-bg-blob-1 {
+  width: 38vw;
+  height: 38vw;
+  left: -8vw;
+  top: -6vw;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%);
+}
+
+.live-bg-blob-2 {
+  width: 32vw;
+  height: 32vw;
+  right: -6vw;
+  bottom: -4vw;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15), transparent 65%);
+}
+
+.live-bg-blob-3 {
+  width: 24vw;
+  height: 24vw;
+  left: 44vw;
+  top: 32vh;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.11), transparent 65%);
+}
+
+.live-bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent 75%);
+}
+
+.live-bg-spot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 520px;
+  height: 520px;
+  margin-left: -260px;
+  margin-top: -260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.14), rgba(16, 185, 129, 0.04) 40%, transparent 65%);
+  filter: blur(20px);
+  will-change: transform;
+}
+
 /* ─── Charts Container ───────────────────────────────────── */
 .chart-container {
   width: 100%;

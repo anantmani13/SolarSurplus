@@ -16,6 +16,7 @@ import Recommendations from './components/Recommendations';
 import NotificationCenter from './components/NotificationCenter';
 import UserHistory from './components/UserHistory';
 import GridExportCard from './components/GridExportCard';
+import LiveBackground from './components/LiveBackground';
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
@@ -125,6 +126,7 @@ export default function App() {
 
   return (
     <>
+      <LiveBackground />
       <Toaster position="top-right" />
       <Navbar
         user={user}

@@ -84,7 +84,7 @@ export default function SurplusTimeline({ data }) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-            <XAxis dataKey="hour" stroke="#64748b" tick={{ fontSize: 11 }} />
+            <XAxis dataKey="hour" stroke="#64748b" tick={{ fontSize: 11 }} interval={2} />
             <YAxis stroke="#64748b" tick={{ fontSize: 11 }} label={{ value: 'kWh', angle: -90, position: 'insideLeft', style: { fill: '#64748b' } }} />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13 }} />

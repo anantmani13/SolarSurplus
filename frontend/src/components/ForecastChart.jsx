@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  AreaChart, Area, ComposedChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { Zap, Sun, Wind } from 'lucide-react';
@@ -99,15 +99,11 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
       <div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
           {viewMode === 'power' ? (
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradGen" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
                   <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gradCon" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradSurplus" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
@@ -120,19 +116,15 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13 }} />
               <Area type="monotone" dataKey="Generation" stroke="#10B981" fill="url(#gradGen)" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#10B981' }} unit=" kWh" />
-              <Area type="monotone" dataKey="Consumption" stroke="#F59E0B" fill="url(#gradCon)" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#F59E0B' }} unit=" kWh" />
               <Area type="monotone" dataKey="Surplus" stroke="#3B82F6" fill="url(#gradSurplus)" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#3B82F6' }} unit=" kWh" />
-            </AreaChart>
+              <Line type="monotone" dataKey="Consumption" stroke="#F59E0B" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#F59E0B' }} unit=" kWh" />
+            </ComposedChart>
           ) : (
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradGHI" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.45} />
                   <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.0} />
-                </linearGradient>
-                <linearGradient id="gradDNI" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#FB7185" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#FB7185" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -142,11 +134,11 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13 }} />
               <Area yAxisId="left" type="monotone" dataKey="GHI" name="GHI Solar Irradiance" stroke="#F59E0B" fill="url(#gradGHI)" strokeWidth={2} dot={false} unit=" W/m²" />
-              <Area yAxisId="left" type="monotone" dataKey="DNI" name="DNI Direct Irradiance" stroke="#FB7185" fill="url(#gradDNI)" strokeWidth={1.5} strokeDasharray="4 4" dot={false} unit=" W/m²" />
-              <Area yAxisId="right" type="monotone" dataKey="CellTemp" name="PV Cell Temp" stroke="#EF4444" strokeWidth={2} dot={false} fill="none" unit=" °C" />
-              <Area yAxisId="right" type="monotone" dataKey="Temp" name="Air Temp" stroke="#38BDF8" strokeWidth={1.5} dot={false} fill="none" unit=" °C" />
-              <Area yAxisId="right" type="monotone" dataKey="Wind" name="Wind Speed" stroke="#A7F3D0" strokeWidth={1.5} strokeDasharray="3 3" dot={false} fill="none" unit=" m/s" />
-            </AreaChart>
+              <Line yAxisId="left" type="monotone" dataKey="DNI" name="DNI Direct Irradiance" stroke="#FB7185" strokeWidth={1.5} strokeDasharray="4 4" dot={false} unit=" W/m²" />
+              <Line yAxisId="right" type="monotone" dataKey="CellTemp" name="PV Cell Temp" stroke="#EF4444" strokeWidth={2} dot={false} unit=" °C" />
+              <Line yAxisId="right" type="monotone" dataKey="Temp" name="Air Temp" stroke="#38BDF8" strokeWidth={1.5} dot={false} unit=" °C" />
+              <Line yAxisId="right" type="monotone" dataKey="Wind" name="Wind Speed" stroke="#A7F3D0" strokeWidth={1.5} strokeDasharray="3 3" dot={false} unit=" m/s" />
+            </ComposedChart>
           )}
         </ResponsiveContainer>
       </div>

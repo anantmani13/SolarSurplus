@@ -83,9 +83,9 @@ async def generate_forecast(user_input: UserInput):
 
         # Determine data source for transparency
         weather_source = weather.get("data_source", "Open-Meteo (Best Match)")
-        ml_model = "XGBoost + Weather API" if predictor.xgb_model else "Physics-Based Estimation"
-        if weather_source == "estimated":
-            ml_model = ml_model.replace("Weather API", "Estimated Weather")
+        ml_model = predictor.last_used_model
+        if weather_source == "estimated" and ml_model != "Physics-Based Estimation":
+            ml_model += " (with Estimated Weather)"
 
         return PredictionResponse(
             location={

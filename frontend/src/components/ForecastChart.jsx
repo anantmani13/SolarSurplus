@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  AreaChart, Area, ComposedChart, Line, XAxis, YAxis, CartesianGrid,
+  AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { Zap, Sun, Wind } from 'lucide-react';
@@ -34,7 +34,7 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
   // First 48 hours for clarity
   const chartData = data.slice(0, 48).map((entry, i) => ({
     time: entry.timestamp
-      ? new Date(entry.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      ? new Date(entry.timestamp).toLocaleTimeString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
       : `H${i}`,
     Generation: entry.predicted_generation_kwh || entry.generation_kwh || 0,
     Consumption: entry.estimated_consumption_kwh || entry.consumption_kwh || 0,
@@ -50,7 +50,7 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
     <div className="glass-card">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <h3 className="chart-title" style={{ margin: 0 }}>{title}</h3>
-        
+
         {/* Toggle Mode */}
         <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.05)', padding: 4, borderRadius: 8 }}>
           <button
@@ -120,42 +120,25 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
               <Line type="monotone" dataKey="Consumption" stroke="#F59E0B" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#F59E0B' }} unit=" kWh" />
             </ComposedChart>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }}>
-              <div style={{ flex: 1 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gradGHI" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.45} />
-                        <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-                    <YAxis stroke="#F59E0B" tick={{ fontSize: 11 }} unit=" W/m²" />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ paddingTop: 0, fontSize: 12 }} />
-                    <Area type="monotone" dataKey="GHI" name="GHI Solar Irradiance" stroke="#F59E0B" fill="url(#gradGHI)" strokeWidth={2} dot={false} unit=" W/m²" />
-                    <Line type="monotone" dataKey="DNI" name="DNI Direct Irradiance" stroke="#FB7185" strokeWidth={1.5} strokeDasharray="4 4" dot={false} unit=" W/m²" />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-              <div style={{ flex: 1 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-                    <YAxis yAxisId="left" stroke="#EF4444" tick={{ fontSize: 11 }} unit=" °C" />
-                    <YAxis yAxisId="right" orientation="right" stroke="#A7F3D0" tick={{ fontSize: 11 }} unit=" m/s" />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ paddingTop: 0, fontSize: 12 }} />
-                    <Line yAxisId="left" type="monotone" dataKey="CellTemp" name="PV Cell Temp" stroke="#EF4444" strokeWidth={2} dot={false} unit=" °C" />
-                    <Line yAxisId="left" type="monotone" dataKey="Temp" name="Air Temp" stroke="#38BDF8" strokeWidth={1.5} dot={false} unit=" °C" />
-                    <Line yAxisId="right" type="monotone" dataKey="Wind" name="Wind Speed" stroke="#A7F3D0" strokeWidth={1.5} strokeDasharray="3 3" dot={false} unit=" m/s" />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradGHI" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.45} />
+                  <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+              <YAxis yAxisId="left" stroke="#F59E0B" tick={{ fontSize: 11 }} unit=" W/m²" />
+              <YAxis yAxisId="right" orientation="right" stroke="#38BDF8" tick={{ fontSize: 11 }} unit=" °C/ms" />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13 }} />
+              <Area yAxisId="left" type="monotone" dataKey="GHI" name="GHI Solar Irradiance" stroke="#F59E0B" fill="url(#gradGHI)" strokeWidth={2} dot={false} unit=" W/m²" />
+              <Line yAxisId="left" type="monotone" dataKey="DNI" name="DNI Direct Irradiance" stroke="#FB7185" strokeWidth={1.5} strokeDasharray="4 4" dot={false} unit=" W/m²" />
+              <Line yAxisId="right" type="monotone" dataKey="CellTemp" name="PV Cell Temp" stroke="#EF4444" strokeWidth={2} dot={false} unit=" °C" />
+              <Line yAxisId="right" type="monotone" dataKey="Temp" name="Air Temp" stroke="#38BDF8" strokeWidth={1.5} dot={false} unit=" °C" />
+              <Line yAxisId="right" type="monotone" dataKey="Wind" name="Wind Speed" stroke="#A7F3D0" strokeWidth={1.5} strokeDasharray="3 3" dot={false} unit=" m/s" />
+            </ComposedChart>
           )}
         </ResponsiveContainer>
       </div>

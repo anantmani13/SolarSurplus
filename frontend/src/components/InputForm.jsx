@@ -153,7 +153,7 @@ export default function InputForm({ onSubmit, loading }) {
           <div className="form-group">
             <label className="form-label">
               <Sun size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Solar Panel Capacity (kW)
+              Solar Panel Size (kW)
             </label>
             <input
               type="number"
@@ -164,7 +164,7 @@ export default function InputForm({ onSubmit, loading }) {
               step="0.1"
               required
             />
-            <span className="form-helper">Total rated power of your solar panels</span>
+            <span className="form-helper">Total power your solar panels can produce at once. A typical house has 3-5 kW.</span>
           </div>
 
           {/* Battery Capacity */}
@@ -182,7 +182,7 @@ export default function InputForm({ onSubmit, loading }) {
               step="0.1"
               required
             />
-            <span className="form-helper">Total energy storage capacity</span>
+            <span className="form-helper">Total energy your battery can store. A typical home battery is 5-10 kWh.</span>
           </div>
 
           {/* Current Charge */}
@@ -200,25 +200,29 @@ export default function InputForm({ onSubmit, loading }) {
               max="100"
               required
             />
-            <span className="form-helper">State of charge right now</span>
+            <span className="form-helper">How full is your battery right now?</span>
           </div>
 
           {/* Daily Consumption */}
           <div className="form-group">
             <label className="form-label">
               <Zap size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Avg. Daily Consumption (kWh)
+              Household Daily Energy Use
             </label>
-            <input
-              type="number"
+            <select
               className="form-input"
               value={form.avg_daily_consumption_kwh}
-              onChange={(e) => handleChange('avg_daily_consumption_kwh', e.target.value)}
-              min="0.1"
-              step="0.1"
+              onChange={(e) => handleChange('avg_daily_consumption_kwh', parseFloat(e.target.value))}
               required
-            />
-            <span className="form-helper">Your average daily electricity usage</span>
+            >
+              <option value="" disabled>Select household size...</option>
+              <option value="5">Minimal (Lights, Fan, Phone) ~ 5 kWh/day</option>
+              <option value="10">Small (Basic appliances, 1-2 people) ~ 10 kWh/day</option>
+              <option value="15">Medium (1 AC, Fridge, TV, 3-4 people) ~ 15 kWh/day</option>
+              <option value="25">Large (Multiple ACs, heavy usage) ~ 25 kWh/day</option>
+              <option value="40">Extra Large (Villa, constant AC) ~ 40 kWh/day</option>
+            </select>
+            <span className="form-helper">We use this to calculate how fast your battery will drain.</span>
           </div>
 
           {/* Panel Age */}

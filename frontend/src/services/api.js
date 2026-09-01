@@ -193,12 +193,70 @@ function generateClientFallbackForecast(userInput) {
   };
 }
 
+async function fetchClientWeather(lat, lon, days = 7) {
+  try {
+    const params = new URLSearchParams({
+      latitude: lat,
+      longitude: lon,
+      hourly: [
+        "temperature_2m",
+        "relative_humidity_2m",
+        "wind_speed_10m",
+        "cloud_cover",
+        "shortwave_radiation",
+        "direct_normal_irradiance",
+        "diffuse_radiation",
+        "sunshine_duration"
+      ].join(','),
+      forecast_days: days,
+      timezone: "auto"
+    });
+    const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    
+    // Convert to backend format
+    const hourly = [];
+    for (let i = 0; i < data.hourly.time.length; i++) {
+      hourly.push({
+        timestamp: data.hourly.time[i],
+        temperature: data.hourly.temperature_2m[i],
+        humidity: data.hourly.relative_humidity_2m[i],
+        wind_speed: data.hourly.wind_speed_10m[i],
+        cloud_cover: data.hourly.cloud_cover[i],
+        ghi: data.hourly.shortwave_radiation[i],
+        dni: data.hourly.direct_normal_irradiance[i],
+        dhi: data.hourly.diffuse_radiation[i],
+        sunshine_duration: data.hourly.sunshine_duration[i],
+      });
+    }
+    
+    return {
+      latitude: lat,
+      longitude: lon,
+      timezone: data.timezone,
+      hourly,
+      data_source: "Open-Meteo (Client Fetch)"
+    };
+  } catch (err) {
+    console.warn("Client weather fetch failed:", err);
+    return null;
+  }
+}
+
 /**
  * Generate a solar surplus forecast based on user inputs.
  * Tries the FastAPI backend first; falls back seamlessly to client engine if API is rate limited.
  */
 export async function generateForecast(userInput) {
   try {
+    // Pre-fetch weather client-side to bypass backend IP rate limiting
+    const clientWeather = await fetchClientWeather(userInput.latitude, userInput.longitude);
+    if (clientWeather) {
+      userInput.client_weather_data = clientWeather;
+    }
+
     return await fetchAPI('/api/predict/forecast', {
       method: 'POST',
       body: JSON.stringify(userInput),

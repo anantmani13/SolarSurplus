@@ -23,12 +23,15 @@ async def generate_forecast(user_input: UserInput):
     4. Return full forecast with recommendations
     """
     try:
-        # 1. Fetch weather data
-        weather = await fetch_weather_forecast(
-            user_input.latitude,
-            user_input.longitude,
-            forecast_days=7,
-        )
+        # 1. Fetch weather data (use client data if provided)
+        if user_input.client_weather_data:
+            weather = user_input.client_weather_data
+        else:
+            weather = await fetch_weather_forecast(
+                user_input.latitude,
+                user_input.longitude,
+                forecast_days=7,
+            )
         weather_hours = weather["hourly"]
 
         # 2. Predict solar generation

@@ -52,6 +52,17 @@ export default function Navbar({ user, activeTab, onTabChange }) {
           </li>
           {user && (
             <li>
+              <button
+                className={`nav-link ${activeTab === 'history' ? 'active' : ''}`}
+                onClick={() => onTabChange('history')}
+              >
+                <BarChart3 size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                History
+              </button>
+            </li>
+          )}
+          {user && (
+            <li>
               <button className="nav-link" onClick={handleLogout} title="Logout">
                 <LogOut size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
                 Logout

@@ -14,6 +14,7 @@ import BatteryStatus from './components/BatteryStatus';
 import WeatherPanel from './components/WeatherPanel';
 import Recommendations from './components/Recommendations';
 import NotificationCenter from './components/NotificationCenter';
+import UserHistory from './components/UserHistory';
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
@@ -100,6 +101,15 @@ export default function App() {
     return hDate.getHours() === now.getHours() && hDate.getDate() === now.getDate();
   })?.battery_action || 'idle';
 
+  if (authLoading) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: '#020617' }}>
+        <div className="spinner" style={{ width: 40, height: 40, border: '3px solid #10B981', borderLeftColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+        <p style={{ marginTop: 16, color: '#94a3b8' }}>Loading your dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <Toaster position="top-right" />
@@ -124,11 +134,13 @@ export default function App() {
               {activeTab === 'dashboard' && 'Energy Dashboard'}
               {activeTab === 'forecast' && 'Generate Forecast'}
               {activeTab === 'notifications' && 'Energy Alerts'}
+              {activeTab === 'history' && 'Configuration History'}
             </h1>
             <p className="page-subtitle">
               {activeTab === 'dashboard' && 'Solar surplus forecasting & battery optimization'}
               {activeTab === 'forecast' && 'Configure your system and generate a 7-day prediction'}
               {activeTab === 'notifications' && 'Stay informed about your energy production & usage'}
+              {activeTab === 'history' && 'View and restore your past predictions'}
             </p>
           </div>
           {!user && (
@@ -201,6 +213,16 @@ export default function App() {
           <div style={{ maxWidth: 800, margin: '0 auto' }}>
             <NotificationCenter predictions={predictions} />
           </div>
+        )}
+
+        {/* ─── History Tab ───────────────────────────── */}
+        {activeTab === 'history' && (
+          <UserHistory 
+            user={user} 
+            onRestore={(entry) => {
+              handleForecast(entry);
+            }} 
+          />
         )}
       </div>
 

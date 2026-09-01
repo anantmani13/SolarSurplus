@@ -20,6 +20,10 @@ class UserInput(BaseModel):
         default=10.0, gt=0,
         description="Average daily energy consumption in kWh"
     )
+    client_weather_data: Optional[dict] = Field(
+        default=None,
+        description="Optional pre-fetched weather data from the client to bypass backend IP rate limits"
+    )
 
 
 class HourlyForecast(BaseModel):

@@ -67,12 +67,19 @@ function generateClientFallbackForecast(userInput) {
     const hour = dt.getHours();
     const timeStr = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}T${String(hour).padStart(2, '0')}:00`;
 
-    // Solar calculation
+    // Weather and Solar calculations
     let ghi = 0;
     let dni = 0;
     let dhi = 0;
     let genKwh = 0;
     let cloudCover = 20;
+
+    const tempPhase = (hour >= 5 && hour <= 17) ? Math.sin((Math.PI * (hour - 5)) / 12) : -0.5;
+    const temperature = +(26.0 + 6.0 * tempPhase).toFixed(1);
+    const windSpeed = +(2.0 + 1.2 * Math.cos(hour / 4.0)).toFixed(1); // m/s
+    const humidity = +(Math.max(30, Math.min(85, 60.0 - 15.0 * tempPhase))).toFixed(0);
+
+    let cellTemp = temperature;
 
     if (hour >= 6 && hour <= 18) {
       const solarPhase = Math.sin((Math.PI * (hour - 6)) / 12);
@@ -82,9 +89,15 @@ function generateClientFallbackForecast(userInput) {
       dhi = Math.max(0, ghi * 0.15);
       cloudCover = 15 + Math.round(10 * Math.sin(i / 12));
 
-      // Generation: Area * Efficiency (18%) * PR (80%)
-      const area = effectivePanelKw * 5.0;
-      genKwh = Math.min(effectivePanelKw, (ghi * area * 0.18 * 0.8) / 1000);
+      // Operating cell temperature with convective wind cooling
+      const coolingFactor = 1.0 + 0.05 * windSpeed;
+      cellTemp = +(temperature + ((45.0 - 20.0) / 800.0) * ghi / coolingFactor).toFixed(1);
+
+      // Temperature loss factor (-0.4%/°C above 25°C)
+      const tempLossFactor = Math.max(0.6, 1.0 - 0.004 * (cellTemp - 25.0));
+
+      // Generation: Effective kW * (GHI / 1000) * TempLoss * PR (84%)
+      genKwh = Math.min(effectivePanelKw, effectivePanelKw * (ghi / 1000.0) * tempLossFactor * 0.84);
     }
 
     const consKwh = avg_daily_consumption_kwh * consumptionPattern[hour];
@@ -114,17 +127,17 @@ function generateClientFallbackForecast(userInput) {
     totalGenerated += genKwh;
     totalConsumed += consKwh;
 
-    const tempPhase = hour >= 5 && hour <= 17 ? Math.sin((Math.PI * (hour - 5)) / 12) : -0.5;
-    const temperature = +(26.0 + 6.0 * tempPhase).toFixed(1);
-
     hourlyForecast.push({
       hour: i,
       timestamp: timeStr,
       temperature,
+      wind_speed: windSpeed,
+      humidity: +humidity,
       cloud_cover: cloudCover,
       ghi: +ghi.toFixed(1),
       dni: +dni.toFixed(1),
       dhi: +dhi.toFixed(1),
+      cell_temperature: cellTemp,
       predicted_generation_kwh: +genKwh.toFixed(3),
       estimated_consumption_kwh: +consKwh.toFixed(3),
       surplus_kwh: +surplus.toFixed(3),

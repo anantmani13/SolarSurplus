@@ -48,18 +48,28 @@ async def generate_forecast(user_input: UserInput):
         )
 
         # 4. Build hourly forecast entries
+        from app.services.weather_service import calculate_cell_temperature
+
         hourly_forecast = []
         for i, (weather_h, sched) in enumerate(
             zip(weather_hours[:len(generation)], battery_result["schedule"])
         ):
+            amb_temp = float(weather_h.get("temperature", 0))
+            ghi_val = float(weather_h.get("ghi", 0))
+            wind_val = float(weather_h.get("wind_speed", 0))
+            cell_temp = calculate_cell_temperature(amb_temp, ghi_val, wind_val)
+
             hourly_forecast.append(HourlyForecast(
                 hour=i,
                 timestamp=weather_h.get("timestamp", ""),
-                temperature=weather_h.get("temperature", 0),
-                cloud_cover=weather_h.get("cloud_cover", 0),
-                ghi=weather_h.get("ghi", 0),
-                dni=weather_h.get("dni", 0),
-                dhi=weather_h.get("dhi", 0),
+                temperature=amb_temp,
+                wind_speed=wind_val,
+                humidity=float(weather_h.get("humidity", 0)),
+                cloud_cover=float(weather_h.get("cloud_cover", 0)),
+                ghi=ghi_val,
+                dni=float(weather_h.get("dni", 0)),
+                dhi=float(weather_h.get("dhi", 0)),
+                cell_temperature=cell_temp,
                 predicted_generation_kwh=sched["generation_kwh"],
                 estimated_consumption_kwh=sched["consumption_kwh"],
                 surplus_kwh=sched["surplus_kwh"],
@@ -67,6 +77,12 @@ async def generate_forecast(user_input: UserInput):
                 battery_charge_kwh=sched["battery_charge_kwh"],
                 battery_soc_percent=sched["battery_soc_percent"],
             ))
+
+        # Determine data source for transparency
+        weather_source = weather.get("data_source", "Open-Meteo (Best Match)")
+        ml_model = "XGBoost + Weather API" if predictor.xgb_model else "Physics-Based Estimation"
+        if weather_source == "estimated":
+            ml_model = ml_model.replace("Weather API", "Estimated Weather")
 
         return PredictionResponse(
             location={
@@ -84,7 +100,8 @@ async def generate_forecast(user_input: UserInput):
             hourly_forecast=hourly_forecast,
             daily_summary=battery_result["daily_summary"],
             recommendations=battery_result["recommendations"],
-            model_used="XGBoost + Weather API" if predictor.xgb_model else "Physics-Based Estimation",
+            model_used=ml_model,
+            weather_data_source=weather_source,
         )
 
     except Exception as e:

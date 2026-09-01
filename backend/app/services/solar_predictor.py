@@ -69,18 +69,32 @@ class SolarPredictor:
         ['MODULE_TEMP', 'Amb_Temp', 'WIND_Speed', 'IRR (W/m2)', 'DC Current in Amps',
          'AC Ir in Amps', 'AC Iy in Amps', 'AC Ib in Amps',
          'AC Power in Watts_lag_1', ..., 'AC Power in Watts_rolling_std_24']
+
+        Properly factors in:
+          - Irradiance (GHI)
+          - Ambient Temperature
+          - Convective Wind Speed Cooling (T_module = T_amb + (25 * GHI/800) / (1 + 0.05*v_wind))
+          - Thermal derating factor
         """
         rows = []
         for h in weather_data:
             irr = float(h.get("ghi", 0))
             amb = float(h.get("temperature", 25))
-            wind = float(h.get("wind_speed", 5))
-            mod_temp = amb + (irr / 800.0) * 25.0
-            dc_curr = (irr / 1000.0) * 8.5
-            ac_ir = (irr / 1000.0) * 12.0
-            ac_iy = (irr / 1000.0) * 12.0
-            ac_ib = (irr / 1000.0) * 12.0
-            est_power = (irr / 1000.0) * 330000.0
+            wind = max(0.0, float(h.get("wind_speed", 2)))
+
+            # Module temperature considering convective wind cooling
+            cooling = 1.0 + 0.05 * wind
+            mod_temp = amb + (irr / 800.0) * 25.0 / cooling
+
+            # Temperature derate (power drops ~0.4% per °C above 25°C)
+            temp_derate = max(0.65, 1.0 - 0.004 * (mod_temp - 25.0))
+
+            dc_curr = (irr / 1000.0) * 8.5 * temp_derate
+            ac_ir = (irr / 1000.0) * 12.0 * temp_derate
+            ac_iy = (irr / 1000.0) * 12.0 * temp_derate
+            ac_ib = (irr / 1000.0) * 12.0 * temp_derate
+            est_power = (irr / 1000.0) * 330000.0 * temp_derate * 0.85
+
             rows.append({
                 "MODULE_TEMP": mod_temp,
                 "Amb_Temp": amb,
@@ -113,7 +127,8 @@ class SolarPredictor:
         panel_age_years: float = 0,
     ) -> list[float]:
         """
-        Predict hourly solar generation using XGBoost ML model (or physics fallback).
+        Predict hourly solar generation using XGBoost ML model (or physics fallback),
+        rigorously taking into account solar irradiance, ambient temperature, and wind speed.
         """
         degradation_factor = max(0.0, 1.0 - 0.005 * panel_age_years)
         effective_capacity = panel_capacity_kw * degradation_factor
@@ -122,7 +137,7 @@ class SolarPredictor:
 
         if self.xgb_model and self.scaler and self.pca and self._loaded:
             try:
-                # 1. Extract 22 time-series features
+                # 1. Extract 22 time-series features (accounting for GHI, Amb_Temp, Wind)
                 X = self._build_feature_matrix(weather_data)
                 # 2. StandardScaler normalization
                 X_scaled = self.scaler.transform(X)
@@ -135,8 +150,8 @@ class SolarPredictor:
                 raw_preds_kw = raw_preds / 1000.0
 
                 for i, hour_data in enumerate(weather_data):
-                    ghi = hour_data.get("ghi", 0)
-                    if ghi <= 10:  # Night time
+                    ghi = float(hour_data.get("ghi", 0))
+                    if ghi <= 10.0:  # Night time
                         predictions.append(0.0)
                     else:
                         pred_ratio = max(0.0, raw_preds_kw[i] / plant_nominal_kw)
@@ -148,10 +163,17 @@ class SolarPredictor:
                 print(f"[PREDICTOR] XGBoost ML inference failed ({e}). Falling back to PV model.")
                 predictions = []
 
-        # Physics-based fallback
+        # Physics-based fallback (incorporating GHI, Temperature, and Wind Speed)
         for hour_data in weather_data:
-            ghi = hour_data.get("ghi", 0)
-            gen = estimate_solar_generation(ghi, effective_capacity)
+            ghi = float(hour_data.get("ghi", 0))
+            amb = float(hour_data.get("temperature", 25.0))
+            wind = float(hour_data.get("wind_speed", 2.0))
+            gen = estimate_solar_generation(
+                ghi=ghi,
+                panel_capacity_kw=effective_capacity,
+                temperature=amb,
+                wind_speed=wind,
+            )
             predictions.append(round(float(gen), 3))
 
         return predictions

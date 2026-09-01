@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Sun, Battery, MapPin, Calendar, Gauge,
-  Zap, ArrowRight, Loader2
+  Zap, ArrowRight, Loader2, Search, Check
 } from 'lucide-react';
 
 const DEFAULT_VALUES = {
@@ -10,13 +10,95 @@ const DEFAULT_VALUES = {
   current_battery_charge: 50,
   panel_age_years: 2,
   battery_age_years: 1,
-  latitude: 12.97,   // Hassan, Karnataka (matches dataset location)
-  longitude: 75.56,
+  latitude: 25.4934,  // Prayagraj (sensible default)
+  longitude: 81.8675,
   avg_daily_consumption_kwh: 15,
 };
 
 export default function InputForm({ onSubmit, loading }) {
   const [form, setForm] = useState(DEFAULT_VALUES);
+  const [geoStatus, setGeoStatus] = useState('idle'); // 'detecting' | 'success' | 'failed' | 'idle'
+  const [cityName, setCityName] = useState('Prayagraj, UP');
+  const [citySearchQuery, setCitySearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  // Auto-detect location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      setGeoStatus('detecting');
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = parseFloat(pos.coords.latitude.toFixed(4));
+          const lon = parseFloat(pos.coords.longitude.toFixed(4));
+          setForm((prev) => ({
+            ...prev,
+            latitude: lat,
+            longitude: lon,
+          }));
+          setGeoStatus('success');
+
+          // Reverse geocode to get city name
+          try {
+            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${lat},${lon}&count=1&language=en&format=json`);
+            const data = await res.json();
+            if (data?.results?.[0]?.name) {
+              setCityName(`${data.results[0].name}, ${data.results[0].country || ''}`);
+            } else {
+              setCityName(`${lat}°N, ${lon}°E`);
+            }
+          } catch {
+            setCityName(`${lat}°N, ${lon}°E`);
+          }
+        },
+        () => {
+          setGeoStatus('failed');
+          setCityName('Prayagraj, UP (Default)');
+        },
+        { timeout: 5000, enableHighAccuracy: false }
+      );
+    }
+  }, []);
+
+  // Search cities via Open-Meteo free geocoding API
+  const handleSearchCity = async (query) => {
+    setCitySearchQuery(query);
+    if (!query || query.trim().length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setShowDropdown(true);
+    try {
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query.trim())}&count=6&language=en&format=json`);
+      const data = await res.json();
+      setSearchResults(data.results || []);
+    } catch (err) {
+      console.warn('Geocoding search failed:', err);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectCity = (city) => {
+    const lat = parseFloat(city.latitude.toFixed(4));
+    const lon = parseFloat(city.longitude.toFixed(4));
+    const label = `${city.name}${city.admin1 ? ', ' + city.admin1 : ''} (${city.country_code || city.country})`;
+    
+    setForm((prev) => ({
+      ...prev,
+      latitude: lat,
+      longitude: lon,
+    }));
+    setCityName(label);
+    setCitySearchQuery('');
+    setShowDropdown(false);
+    setGeoStatus('success');
+  };
 
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: parseFloat(value) || 0 }));
@@ -29,15 +111,24 @@ export default function InputForm({ onSubmit, loading }) {
 
   const handleGeolocate = () => {
     if (navigator.geolocation) {
+      setGeoStatus('detecting');
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        async (pos) => {
+          const lat = parseFloat(pos.coords.latitude.toFixed(4));
+          const lon = parseFloat(pos.coords.longitude.toFixed(4));
           setForm((prev) => ({
             ...prev,
-            latitude: parseFloat(pos.coords.latitude.toFixed(4)),
-            longitude: parseFloat(pos.coords.longitude.toFixed(4)),
+            latitude: lat,
+            longitude: lon,
           }));
+          setGeoStatus('success');
+          setCityName(`GPS: ${lat}°N, ${lon}°E`);
         },
-        (err) => console.error('Geolocation error:', err)
+        (err) => {
+          console.error('Geolocation error:', err);
+          setGeoStatus('failed');
+        },
+        { timeout: 6000, enableHighAccuracy: true }
       );
     }
   };
@@ -51,7 +142,7 @@ export default function InputForm({ onSubmit, loading }) {
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 700 }}>System Configuration</h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            Enter your solar panel and battery details
+            Enter your solar panel, battery, and location details
           </p>
         </div>
       </div>
@@ -165,25 +256,111 @@ export default function InputForm({ onSubmit, loading }) {
           </div>
         </div>
 
-        {/* Location */}
-        <div style={{ marginTop: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <label className="form-label" style={{ margin: 0 }}>
-              <MapPin size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Location
-            </label>
+        {/* Location Section */}
+        <div style={{ marginTop: 12, padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <MapPin size={16} color="var(--emerald-400)" />
+              <span style={{ fontWeight: 600, fontSize: 14 }}>Location / City</span>
+              {cityName && (
+                <span style={{ fontSize: 12, color: 'var(--emerald-400)', background: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: 12 }}>
+                  📍 {cityName}
+                </span>
+              )}
+            </div>
             <button
               type="button"
               className="btn btn-secondary"
               onClick={handleGeolocate}
-              style={{ padding: '6px 14px', fontSize: 13 }}
+              style={{ padding: '6px 12px', fontSize: 12, gap: 4 }}
             >
-              <MapPin size={14} />
-              Use My Location
+              {geoStatus === 'detecting' ? (
+                <>
+                  <Loader2 size={12} className="spin" /> Locating...
+                </>
+              ) : (
+                <>
+                  <MapPin size={12} /> Use GPS
+                </>
+              )}
             </button>
           </div>
+
+          {/* City Search Bar with Autocomplete */}
+          <div style={{ position: 'relative', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', padding: '0 12px' }}>
+              <Search size={14} color="var(--text-muted)" style={{ marginRight: 8 }} />
+              <input
+                type="text"
+                placeholder="Search city or town (e.g. Prayagraj, Delhi, Mumbai, Bengaluru, London...)"
+                value={citySearchQuery}
+                onChange={(e) => handleSearchCity(e.target.value)}
+                onFocus={() => { if (searchResults.length > 0) setShowDropdown(true); }}
+                style={{
+                  width: '100%',
+                  padding: '8px 0',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  fontSize: 13,
+                  outline: 'none',
+                }}
+              />
+              {isSearching && <Loader2 size={14} className="spin" color="var(--emerald-400)" />}
+            </div>
+
+            {/* Dropdown Suggestions */}
+            {showDropdown && searchResults.length > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                marginTop: 4,
+                background: '#1a1f2e',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 8,
+                boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+                zIndex: 50,
+                maxHeight: 200,
+                overflowY: 'auto',
+              }}>
+                {searchResults.map((city, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => handleSelectCity(city)}
+                    style={{
+                      padding: '10px 14px',
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      borderBottom: idx < searchResults.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'background 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(16,185,129,0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <div>
+                      <strong>{city.name}</strong>
+                      <span style={{ color: 'var(--text-muted)', fontSize: 12, marginLeft: 6 }}>
+                        {city.admin1 ? `${city.admin1}, ` : ''}{city.country || ''}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                      {city.latitude.toFixed(2)}°, {city.longitude.toFixed(2)}°
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Latitude and Longitude Inputs */}
           <div className="grid-2">
-            <div className="form-group">
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label" style={{ fontSize: 11 }}>Latitude (°N)</label>
               <input
                 type="number"
                 className="form-input"
@@ -196,7 +373,8 @@ export default function InputForm({ onSubmit, loading }) {
                 required
               />
             </div>
-            <div className="form-group">
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label" style={{ fontSize: 11 }}>Longitude (°E)</label>
               <input
                 type="number"
                 className="form-input"
@@ -216,12 +394,12 @@ export default function InputForm({ onSubmit, loading }) {
           type="submit"
           className="btn btn-primary btn-lg"
           disabled={loading}
-          style={{ width: '100%', marginTop: 8 }}
+          style={{ width: '100%', marginTop: 16 }}
         >
           {loading ? (
             <>
               <Loader2 size={20} className="spinner" />
-              Generating Forecast...
+              Generating Accurate Forecast...
             </>
           ) : (
             <>

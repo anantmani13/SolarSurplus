@@ -27,10 +27,13 @@ class HourlyForecast(BaseModel):
     hour: int
     timestamp: str
     temperature: float
+    wind_speed: float = 0.0  # Wind speed in m/s
+    humidity: float = 0.0  # Relative humidity in %
     cloud_cover: float
-    ghi: float  # Global Horizontal Irradiance
-    dni: float  # Direct Normal Irradiance
-    dhi: float  # Diffuse Horizontal Irradiance
+    ghi: float  # Global Horizontal Irradiance (W/m²)
+    dni: float = 0.0  # Direct Normal Irradiance (W/m²)
+    dhi: float = 0.0  # Diffuse Horizontal Irradiance (W/m²)
+    cell_temperature: Optional[float] = None  # Operating PV cell temperature (°C)
     predicted_generation_kwh: float
     estimated_consumption_kwh: float
     surplus_kwh: float
@@ -47,6 +50,7 @@ class PredictionResponse(BaseModel):
     daily_summary: dict
     recommendations: list[str]
     model_used: str = "XGBoost + Weather API"
+    weather_data_source: str = "Open-Meteo (Best Match)"
 
 
 class WeatherForecast(BaseModel):

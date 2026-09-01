@@ -166,7 +166,7 @@ export default function App() {
                 </div>
 
                 <div className="grid-2" style={{ marginTop: 24 }}>
-                  <WeatherPanel weatherData={predictions.hourly_forecast} />
+                  <WeatherPanel weatherData={predictions.hourly_forecast} dataSource={predictions.weather_data_source} />
                   <Recommendations recommendations={predictions.recommendations} />
                 </div>
               </>

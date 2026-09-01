@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  ComposedChart, AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { Zap, Sun, Wind } from 'lucide-react';

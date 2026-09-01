@@ -201,16 +201,19 @@ class SolarPredictor:
                 X_scaled = self.scaler.transform(X)
                 X_pca = self.pca.transform(X_scaled)
 
+                # Determine if LSTM expects PCA features or full scaled features
+                lstm_input = X_pca if self.lstm_model.lstm.input_size == self.pca.n_components_ else X_scaled
+                
                 seq_len = 24
                 lstm_preds = []
 
                 for i, hour_data in enumerate(weather_data):
                     if i < seq_len - 1:
                         pad_len = seq_len - 1 - i
-                        pad = np.repeat(X_pca[0:1], pad_len, axis=0)
-                        seq = np.vstack([pad, X_pca[:i+1]])
+                        pad = np.repeat(lstm_input[0:1], pad_len, axis=0)
+                        seq = np.vstack([pad, lstm_input[:i+1]])
                     else:
-                        seq = X_pca[i - seq_len + 1 : i + 1]
+                        seq = lstm_input[i - seq_len + 1 : i + 1]
 
                     seq_tensor = torch.FloatTensor(seq).unsqueeze(0)
                     with torch.no_grad():

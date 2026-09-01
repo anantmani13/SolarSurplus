@@ -86,7 +86,7 @@ class SolarPredictor:
     def load_models(self):
         """Load trained models from disk."""
         try:
-            if os.path.exists(settings.xgboost_model_path) and HAS_XGBOOST:
+            if settings.enable_xgboost_model and os.path.exists(settings.xgboost_model_path) and HAS_XGBOOST:
                 self.xgb_model = xgb.XGBRegressor()
                 self.xgb_model.load_model(settings.xgboost_model_path)
                 print("[PREDICTOR] XGBoost model loaded successfully")
@@ -99,7 +99,7 @@ class SolarPredictor:
                 self.pca = joblib.load(settings.pca_path)
                 print("[PREDICTOR] PCA loaded successfully")
 
-            if HAS_TORCH and os.path.exists(settings.lstm_model_path):
+            if settings.enable_lstm_model and HAS_TORCH and os.path.exists(settings.lstm_model_path):
                 # Load the checkpoint dictionary
                 checkpoint = torch.load(settings.lstm_model_path, map_location=torch.device('cpu'))
                 if "model_state_dict" in checkpoint:

@@ -112,6 +112,8 @@ export default function App() {
     ? predictions.hourly_forecast[predictions.hourly_forecast.length - 1]
     : null;
 
+  const batteryHistory = predictions?.hourly_forecast?.slice(-24).map((h) => h.battery_soc_percent || 0) || [];
+
   // Location for tariff/net-metering features (latest input, or stored prediction)
   const dashboardLocation =
     lastInput || predictions?.location || null;
@@ -224,6 +226,7 @@ export default function App() {
                     action={currentAction}
                     capacityKwh={predictions.daily_summary?.usable_battery_capacity_kwh || 10}
                     chargeKwh={latestBattery?.battery_charge_kwh || 5}
+                    socHistory={batteryHistory}
                   />
                 </div>
 

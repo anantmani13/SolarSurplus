@@ -29,6 +29,13 @@ class Settings(BaseModel):
         os.path.dirname(__file__), "..", "..", "ml", "saved_models", "pca.pkl"
     )
 
+    # Model pipeline toggles (provider portability / lighter deploys).
+    # Set ENABLE_LSTM_MODEL=false to skip the heavy torch runtime and go
+    # straight to XGBoost (lighter) then physics. ENABLE_XGBOOST_MODEL=false
+    # forces physics-only, e.g. for testing.
+    enable_lstm_model: bool = os.getenv("ENABLE_LSTM_MODEL", "true").lower() in {"1", "true", "yes", "on"}
+    enable_xgboost_model: bool = os.getenv("ENABLE_XGBOOST_MODEL", "true").lower() in {"1", "true", "yes", "on"}
+
 
 settings = Settings()
 

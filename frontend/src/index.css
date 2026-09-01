@@ -669,6 +669,7 @@ body::before {
   flex-direction: column;
   gap: 2px;
   line-height: 1.05;
+  z-index: 5;
 }
 .battery-percent span:first-child {
   font-size: 11px;
@@ -754,14 +755,153 @@ body::before {
   position: absolute;
   left: 0;
   top: 0;
-  width: 520px;
-  height: 520px;
-  margin-left: -260px;
-  margin-top: -260px;
+  width: 440px;
+  height: 440px;
+  margin-left: -220px;
+  margin-top: -220px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.14), rgba(16, 185, 129, 0.04) 40%, transparent 65%);
-  filter: blur(20px);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.05) 40%, transparent 65%);
+  filter: blur(24px);
   will-change: transform;
+}
+
+/* Cursor ghost trails */
+.live-bg-ghost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.14), transparent 65%);
+  filter: blur(30px);
+  will-change: transform;
+}
+.live-bg-ghost.g1 { width: 260px; height: 260px; margin-left: -130px; margin-top: -130px; opacity: 0.16; }
+.live-bg-ghost.g2 { width: 220px; height: 220px; margin-left: -110px; margin-top: -110px; opacity: 0.12; background: radial-gradient(circle, rgba(139, 92, 246, 0.13), transparent 65%); }
+.live-bg-ghost.g3 { width: 180px; height: 180px; margin-left: -90px; margin-top: -90px; opacity: 0.08; background: radial-gradient(circle, rgba(59, 130, 246, 0.13), transparent 65%); }
+
+/* Starfield with depth parallax */
+.live-bg-stars {
+  position: absolute;
+  inset: 0;
+}
+.live-bg-star {
+  position: absolute;
+  width: 0;
+  height: 0;
+  will-change: transform;
+}
+.live-bg-star i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  background: #e2f5ec;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+  display: block;
+  transform: translate(-50%, -50%) scale(1);
+  animation: starTwinkle 3s ease-in-out infinite;
+}
+@keyframes starTwinkle {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+  50% { transform: translate(-50%, -50%) scale(1.45); opacity: 1; }
+}
+
+/* Click ripple burst */
+.live-bg-ripple {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  margin-left: -12px;
+  margin-top: -12px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(16, 185, 129, 0.55);
+  pointer-events: none;
+  animation: bgRipple 0.8s ease-out forwards;
+}
+@keyframes bgRipple {
+  0% { transform: scale(0.4); opacity: 0.9; }
+  100% { transform: scale(28); opacity: 0; }
+}
+
+/* Card-spotlight glow following the cursor */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(420px circle at var(--lx, 50%) var(--ly, 10%), rgba(16, 185, 129, 0.07), transparent 60%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.glass-card:hover::before { opacity: 1; }
+
+/* Battery: ticks, shine, trend */
+.battery-ticks {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to top,
+    transparent 0 10%,
+    rgba(255, 255, 255, 0.1) 10% 10.35%
+  );
+}
+
+.battery-fill {
+  z-index: 2;
+}
+
+.battery-shine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -55%;
+  height: 55%;
+  z-index: 4;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent);
+  pointer-events: none;
+  animation: batteryShine 3.4s ease-in-out infinite;
+}
+@keyframes batteryShine {
+  0% { transform: translateY(0); opacity: 0; }
+  18% { opacity: 0.9; }
+  60% { transform: translateY(480%); opacity: 0; }
+  100% { transform: translateY(480%); opacity: 0; }
+}
+
+.battery-wave {
+  top: -14px;
+  height: 26px;
+}
+.battery-wave-a { animation: batteryWaveA 3.2s ease-in-out infinite alternate; }
+.battery-wave-b { animation: batteryWaveB 4.1s ease-in-out infinite alternate; }
+
+@keyframes batteryWaveA {
+  0% { transform: translateX(-14%) rotate(0deg); opacity: 0.5; }
+  100% { transform: translateX(10%) rotate(5deg); opacity: 0.8; }
+}
+@keyframes batteryWaveB {
+  0% { transform: translateX(10%) rotate(0deg); opacity: 0.28; }
+  100% { transform: translateX(-14%) rotate(-6deg); opacity: 0.55; }
+}
+
+.battery-trend {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.spark-pulse {
+  transform-origin: center;
+  animation: sparkPulse 1.4s ease-in-out infinite;
+}
+@keyframes sparkPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.7); }
 }
 
 /* ─── Charts Container ───────────────────────────────────── */

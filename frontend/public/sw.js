@@ -2,7 +2,7 @@
    Let the network/API calls reach the backend; only static Vite assets
    (hashed filenames) are cached for snappy installs + repeat loads. */
 
-const STATIC_CACHE = 'solarsurplus-static-v1';
+const STATIC_CACHE = 'solarsurplus-static-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -27,6 +27,23 @@ self.addEventListener('fetch', (event) => {
   // Never cache API calls or cross-origin requests in a way that serves stale data.
   if (url.pathname.startsWith('/api/')) return;
   if (url.origin !== self.location.origin) return;
+
+  // Navigations are network-first (with cache fallback) so a new deploy is
+  // never masked by an old cached app shell; assets stay cache-first.
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(req, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req).then((c) => c || caches.match('/')))
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(req).then((cached) => {

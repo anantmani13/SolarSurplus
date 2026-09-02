@@ -136,8 +136,8 @@ export function toggleLanguage() {
 }
 
 export function useI18n() {
-  const [lang, setLang] = React.useState(readLang);
-  React.useEffect(() => {
+  const [lang, setLang] = useState(readLang);
+  useEffect(() => {
     const fn = (l) => setLang(l);
     listeners.add(fn);
     return () => listeners.delete(fn);

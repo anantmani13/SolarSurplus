@@ -1,6 +1,8 @@
 import { Sun, Droplets, Wind, Cloud, ThermometerSun, Radio, Zap, Eye } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 export default function WeatherPanel({ weatherData, dataSource }) {
+  const { t } = useI18n();
   if (!weatherData?.length) return null;
 
   // Show current (first) entry and next few hours
@@ -8,14 +10,14 @@ export default function WeatherPanel({ weatherData, dataSource }) {
   const upcoming = weatherData.slice(1, 7);
 
   const isEstimated = dataSource === 'estimated';
-  const sourceLabel = isEstimated ? 'Estimated (API offline)' : (dataSource || 'Live Forecast');
+  const sourceLabel = isEstimated ? t('weather.estimated') : (dataSource || t('weather.live'));
 
   return (
     <div className="glass-card">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Sun size={18} color="var(--amber-400)" />
-          <h3 className="chart-title" style={{ margin: 0 }}>Weather & Irradiance</h3>
+          <h3 className="chart-title" style={{ margin: 0 }}>{t('weather.title')}</h3>
         </div>
         <span style={{
           fontSize: 11,
@@ -52,11 +54,11 @@ export default function WeatherPanel({ weatherData, dataSource }) {
               {current.temperature?.toFixed(1)}°C
             </div>
             <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>
-              Ambient Air Temp
+              {t('weather.ambient')}
             </div>
             {current.cell_temperature && (
               <div style={{ fontSize: 12, color: 'var(--amber-400)', marginTop: 3 }}>
-                PV Cell: <strong>{current.cell_temperature.toFixed(1)}°C</strong>
+                {t('weather.pvcell')}: <strong>{current.cell_temperature.toFixed(1)}°C</strong>
               </div>
             )}
           </div>
@@ -66,37 +68,37 @@ export default function WeatherPanel({ weatherData, dataSource }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
           <WeatherMetric
             icon={<Sun size={15} />}
-            label="GHI Irradiance"
+            label={t('weather.ghi')}
             value={`${current.ghi?.toFixed(0)} W/m²`}
             color="var(--amber-400)"
           />
           <WeatherMetric
             icon={<Wind size={15} />}
-            label="Wind Speed"
+            label={t('weather.wind')}
             value={`${current.wind_speed?.toFixed(1)} m/s`}
             color="var(--text-secondary)"
           />
           <WeatherMetric
             icon={<Cloud size={15} />}
-            label="Cloud Cover"
+            label={t('weather.cloud')}
             value={`${current.cloud_cover?.toFixed(0)}%`}
             color="var(--blue-400)"
           />
           <WeatherMetric
             icon={<Zap size={15} />}
-            label="DNI (Direct)"
+            label={t('weather.dni')}
             value={`${current.dni ? current.dni.toFixed(0) : (current.ghi * 0.85).toFixed(0)} W/m²`}
             color="var(--amber-300)"
           />
           <WeatherMetric
             icon={<Droplets size={15} />}
-            label="Humidity"
+            label={t('weather.humidity')}
             value={`${current.humidity ? current.humidity.toFixed(0) : 60}%`}
             color="var(--blue-300)"
           />
           <WeatherMetric
             icon={<Eye size={15} />}
-            label="DHI (Diffuse)"
+            label={t('weather.dhi')}
             value={`${current.dhi ? current.dhi.toFixed(0) : (current.ghi * 0.15).toFixed(0)} W/m²`}
             color="var(--emerald-400)"
           />

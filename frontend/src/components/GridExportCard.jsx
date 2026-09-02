@@ -6,6 +6,7 @@ import {
   PM_SURYAGHAR_URL,
 } from '../data/tariffData';
 import { formatCoordinates } from '../services/geo';
+import { useI18n, f } from '../i18n';
 
 const inr = (value) =>
   `₹${Math.round(value).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
@@ -15,6 +16,7 @@ export default function GridExportCard({
   latitude = 25.49,
   longitude = 81.86,
 }) {
+  const { t } = useI18n();
   const [tariffInfo, setTariffInfo] = useState({ state: null, tariff: null });
   const [loadingTariff, setLoadingTariff] = useState(false);
 
@@ -57,10 +59,10 @@ export default function GridExportCard({
         </div>
         <div>
           <h3 className="chart-title" style={{ margin: 0 }}>
-            Grid Export & Net Metering
+            {t('grid.title')}
           </h3>
           <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            PM Surya Ghar · Earn from surplus solar energy
+            {t('grid.subtitle')}
           </p>
         </div>
         {stateName && (
@@ -76,56 +78,56 @@ export default function GridExportCard({
       <div className="grid-2" style={{ gap: 14 }}>
         <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 10 }}>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
-            <Calendar size={12} style={{ display: 'inline', marginRight: 4 }} /> Exportable Surplus
+            <Calendar size={12} style={{ display: 'inline', marginRight: 4 }} /> {t('grid.surplus')}
           </div>
           <div style={{ fontSize: 22, fontWeight: 800 }}>
             {exportDaily.toFixed(1)} <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>kWh/day</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-            {exportKwh7.toFixed(1)} kWh over forecast period
+            {f(t('grid.period'), { v: exportKwh7.toFixed(1) })}
           </div>
         </div>
 
         <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 10 }}>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
-            <IndianRupeeSymbol /> Export Tariff
+            <IndianRupeeSymbol /> {t('grid.tariff')}
           </div>
           <div style={{ fontSize: 22, fontWeight: 800 }}>
             ₹{rate.toFixed(2)} <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>/kWh</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-            {loadingTariff ? 'Detecting state…' : stateName ? `Net-metering credit · ${stateName}` : formatCoordinates(latitude, longitude) || 'Default national average'}
+            {loadingTariff ? t('grid.detect') : stateName ? f(t('grid.credit'), { s: stateName }) : formatCoordinates(latitude, longitude) || t('grid.default')}
           </div>
         </div>
 
         <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.25)', padding: 14, borderRadius: 10 }}>
           <div style={{ fontSize: 12, color: 'var(--emerald-400)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
-            <TrendingUp size={12} style={{ display: 'inline', marginRight: 4 }} /> Monthly Earnings
+            <TrendingUp size={12} style={{ display: 'inline', marginRight: 4 }} /> {t('grid.monthly')}
           </div>
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--emerald-400)' }}>
             {inr(monthlyEarnings)}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-            ≈ {monthlyExport.toFixed(0)} kWh exported to grid
+            ≈ {f(t('grid.expKwh'), { v: monthlyExport.toFixed(0) })}
           </div>
         </div>
 
         <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.25)', padding: 14, borderRadius: 10 }}>
           <div style={{ fontSize: 12, color: 'var(--emerald-400)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
-            <TrendingUp size={12} style={{ display: 'inline', marginRight: 4 }} /> Yearly Earnings
+            <TrendingUp size={12} style={{ display: 'inline', marginRight: 4 }} /> {t('grid.yearly')}
           </div>
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--emerald-400)' }}>
             {inr(yearlyEarnings)}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-            ≈ {yearlyExport.toFixed(0)} kWh exported to grid
+            ≈ {f(t('grid.expKwh'), { v: yearlyExport.toFixed(0) })}
           </div>
         </div>
       </div>
 
       <div style={{ marginTop: 16, padding: '12px 14px', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
         <Info size={13} style={{ display: 'inline', marginRight: 6, color: 'var(--blue-400)', verticalAlign: 'middle' }} />
-        Under the <strong>PM Surya Ghar: Muft Bijli Yojana</strong>, surplus solar energy exported to the grid is credited at your state's net-metering rate — turning excess generation into direct savings on your electricity bill.
+        {t('grid.info')}
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
@@ -136,7 +138,7 @@ export default function GridExportCard({
           rel="noreferrer"
           style={{ padding: '8px 14px', fontSize: 12.5, textDecoration: 'none' }}
         >
-          State Tariff Details <ExternalLink size={13} />
+          {t('grid.tariffbtn')} <ExternalLink size={13} />
         </a>
         <a
           className="btn btn-secondary"
@@ -145,7 +147,7 @@ export default function GridExportCard({
           rel="noreferrer"
           style={{ padding: '8px 14px', fontSize: 12.5, textDecoration: 'none' }}
         >
-          Apply on PM Surya Ghar <ExternalLink size={13} />
+          {t('grid.apply')} <ExternalLink size={13} />
         </a>
       </div>
     </div>

@@ -58,7 +58,7 @@ export default function InputForm({ onSubmit, loading }) {
         },
         () => {
           setGeoStatus('failed');
-          setCityName('Prayagraj, UP (Default)');
+          setCityName(t('form.citydefault'));
         },
         { timeout: 5000, enableHighAccuracy: false }
       );
@@ -165,7 +165,7 @@ export default function InputForm({ onSubmit, loading }) {
           <div className="form-group">
             <label className="form-label">
               <Sun size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Solar Panel Size (kW)
+              {t('form.panelsize')}
             </label>
             <input
               type="number"
@@ -177,14 +177,14 @@ export default function InputForm({ onSubmit, loading }) {
               step="0.1"
               required
             />
-            <span className="form-helper">Total power your solar panels can produce at once. A typical house has 3-5 kW.</span>
+            {t('form.panelsize.help')}
           </div>
 
           {/* Battery Capacity */}
           <div className="form-group">
             <label className="form-label">
               <Battery size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Battery Capacity (kWh)
+              {t('form.batterycap')}
             </label>
             <input
               type="number"
@@ -196,14 +196,14 @@ export default function InputForm({ onSubmit, loading }) {
               step="0.1"
               required
             />
-            <span className="form-helper">Total energy your battery can store. A typical home battery is 5-10 kWh.</span>
+            {t('form.batterycap.help')}
           </div>
 
           {/* Current Charge */}
           <div className="form-group">
             <label className="form-label">
               <Gauge size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Current Battery Charge (%)
+              {t('form.charge')}
             </label>
             <input
               type="number"
@@ -215,14 +215,14 @@ export default function InputForm({ onSubmit, loading }) {
               max="100"
               required
             />
-            <span className="form-helper">How full is your battery right now?</span>
+            {t('form.charge.help')}
           </div>
 
           {/* Daily Consumption */}
           <div className="form-group">
             <label className="form-label">
               <Zap size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Household Daily Energy Use
+              {t('form.dailyuse')}
             </label>
             <select
               className="form-input"
@@ -230,21 +230,21 @@ export default function InputForm({ onSubmit, loading }) {
               onChange={(e) => handleChange('avg_daily_consumption_kwh', parseFloat(e.target.value))}
               required
             >
-              <option value="" disabled>Select household size...</option>
-              <option value="5">Minimal (Lights, Fan, Phone) ~ 5 kWh/day</option>
-              <option value="10">Small (Basic appliances, 1-2 people) ~ 10 kWh/day</option>
-              <option value="15">Medium (1 AC, Fridge, TV, 3-4 people) ~ 15 kWh/day</option>
-              <option value="25">Large (Multiple ACs, heavy usage) ~ 25 kWh/day</option>
-              <option value="40">Extra Large (Villa, constant AC) ~ 40 kWh/day</option>
+              {t('form.selectsize')}
+              {t('form.opt.minimal')}
+              {t('form.opt.small')}
+              {t('form.opt.medium')}
+              {t('form.opt.large')}
+              {t('form.opt.xlarge')}
             </select>
-            <span className="form-helper">We use this to calculate how fast your battery will drain.</span>
+            {t('form.dailyuse.help')}
           </div>
 
           {/* Panel Age */}
           <div className="form-group">
             <label className="form-label">
               <Calendar size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Panel Age (years)
+              {t('form.panelage')}
             </label>
             <input
               type="number"
@@ -255,14 +255,14 @@ export default function InputForm({ onSubmit, loading }) {
               min="0"
               step="0.5"
             />
-            <span className="form-helper">Panels degrade ~0.5%/year</span>
+            {t('form.panelage.help')}
           </div>
 
           {/* Battery Age */}
           <div className="form-group">
             <label className="form-label">
               <Calendar size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Battery Age (years)
+              {t('form.batteryage')}
             </label>
             <input
               type="number"
@@ -273,7 +273,7 @@ export default function InputForm({ onSubmit, loading }) {
               min="0"
               step="0.5"
             />
-            <span className="form-helper">Batteries degrade ~2%/year</span>
+            {t('form.batteryage.help')}
           </div>
 
           {/* Panel Tilt */}
@@ -306,14 +306,14 @@ export default function InputForm({ onSubmit, loading }) {
               value={form.azimuth_deg}
               onChange={(e) => handleChange('azimuth_deg', parseInt(e.target.value, 10))}
             >
-              <option value="0">North (0°)</option>
-              <option value="45">North-East (45°)</option>
-              <option value="90">East (90°)</option>
-              <option value="135">South-East (135°)</option>
-              <option value="180">South (180°) — Best for India</option>
-              <option value="225">South-West (225°)</option>
-              <option value="270">West (270°)</option>
-              <option value="315">North-West (315°)</option>
+              {t('form.dir.N')}
+              {t('form.dir.NE')}
+              {t('form.dir.E')}
+              {t('form.dir.SE')}
+              {t('form.dir.S.best')}
+              {t('form.dir.SW')}
+              {t('form.dir.W')}
+              {t('form.dir.NW')}
             </select>
             <span className="form-helper">{t('form.azimuth.helper')}</span>
           </div>
@@ -324,7 +324,7 @@ export default function InputForm({ onSubmit, loading }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <MapPin size={16} color="var(--emerald-400)" />
-              <span style={{ fontWeight: 600, fontSize: 14 }}>Location / City</span>
+              {t('form.location')}
               {cityName && (
                 <span style={{ fontSize: 12, color: 'var(--emerald-400)', background: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: 12 }}>
                   📍 {cityName}
@@ -339,11 +339,11 @@ export default function InputForm({ onSubmit, loading }) {
             >
               {geoStatus === 'detecting' ? (
                 <>
-                  <Loader2 size={12} className="spin" /> Locating...
+                  {<><Loader2 size={12} className="spin" /> {t('form.locating')}</>}
                 </>
               ) : (
                 <>
-                  <MapPin size={12} /> Use GPS
+                  {<><MapPin size={12} /> {t('form.usegps')}</>}
                 </>
               )}
             </button>
@@ -423,11 +423,11 @@ export default function InputForm({ onSubmit, loading }) {
           {/* Latitude and Longitude Inputs */}
           <div className="grid-2">
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label" style={{ fontSize: 11 }}>Latitude (°N)</label>
+              <label className="form-label" style={{ fontSize: 11 }}>{t('form.lat')}</label>
               <input
                 type="number"
                 className="form-input"
-                placeholder="Latitude"
+                placeholder={t('form.lat.p')}
                 value={form.latitude}
                 onChange={(e) => handleChange('latitude', e.target.value)}
                 onWheel={(e) => e.target.blur()}
@@ -438,11 +438,11 @@ export default function InputForm({ onSubmit, loading }) {
               />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label" style={{ fontSize: 11 }}>Longitude (°E)</label>
+              <label className="form-label" style={{ fontSize: 11 }}>{t('form.lon')}</label>
               <input
                 type="number"
                 className="form-input"
-                placeholder="Longitude"
+                placeholder={t('form.lon.p')}
                 value={form.longitude}
                 onChange={(e) => handleChange('longitude', e.target.value)}
                 onWheel={(e) => e.target.blur()}

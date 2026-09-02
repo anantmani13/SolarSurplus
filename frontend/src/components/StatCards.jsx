@@ -1,39 +1,41 @@
 import { Sun, Battery, Zap, TrendingUp, ArrowDown, ArrowUp } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 export default function StatCards({ summary }) {
+  const { t } = useI18n();
   if (!summary) return null;
 
   const cards = [
     {
       icon: <Sun size={20} />,
       iconClass: 'emerald',
-      label: 'Total Generation',
+      label: t('stat.gen'),
       value: `${summary.total_generation_kwh?.toFixed(1)} kWh`,
-      change: `${summary.forecast_days} day forecast`,
+      change: `${summary.forecast_days} ${t('stat.dayforecast')}`,
       changeClass: '',
     },
     {
       icon: <Zap size={20} />,
       iconClass: 'amber',
-      label: 'Total Consumption',
+      label: t('stat.cons'),
       value: `${summary.total_consumption_kwh?.toFixed(1)} kWh`,
-      change: `${summary.net_energy_kwh >= 0 ? '+' : ''}${summary.net_energy_kwh?.toFixed(1)} kWh net`,
+      change: `${summary.net_energy_kwh >= 0 ? '+' : ''}${summary.net_energy_kwh?.toFixed(1)} ${t('stat.kwhnet')}`,
       changeClass: summary.net_energy_kwh >= 0 ? 'positive' : 'negative',
     },
     {
       icon: <TrendingUp size={20} />,
       iconClass: 'blue',
-      label: 'Self-Sufficiency',
+      label: t('stat.suff'),
       value: `${summary.self_sufficiency_percent?.toFixed(0)}%`,
-      change: summary.self_sufficiency_percent >= 100 ? 'Fully self-sufficient' : 'Grid supplement needed',
+      change: summary.self_sufficiency_percent >= 100 ? t('stat.full') : t('stat.gridneed'),
       changeClass: summary.self_sufficiency_percent >= 80 ? 'positive' : 'negative',
     },
     {
       icon: <Battery size={20} />,
       iconClass: summary.final_battery_soc_percent > 50 ? 'emerald' : 'red',
-      label: 'Final Battery SoC',
+      label: t('stat.soc'),
       value: `${summary.final_battery_soc_percent?.toFixed(0)}%`,
-      change: `${summary.usable_battery_capacity_kwh?.toFixed(1)} kWh usable`,
+      change: `${summary.usable_battery_capacity_kwh?.toFixed(1)} ${t('stat.kwhusable')}`,
       changeClass: summary.final_battery_soc_percent > 50 ? 'positive' : 'negative',
     },
   ];

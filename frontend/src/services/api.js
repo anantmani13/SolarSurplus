@@ -353,6 +353,13 @@ export async function generateForecast(userInput) {
       userInput.client_weather_data = clientWeather;
     }
 
+    // Ask the backend for localized recommendation texts (Hindi if the UI is in Hindi)
+    let lang = 'en';
+    try {
+      lang = localStorage.getItem('solarsurplus_lang') === 'hi' ? 'hi' : 'en';
+    } catch (e) {}
+    userInput.language = lang;
+
     return await fetchAPI('/api/predict/forecast', {
       method: 'POST',
       body: JSON.stringify(userInput),

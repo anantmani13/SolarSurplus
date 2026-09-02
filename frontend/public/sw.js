@@ -2,7 +2,7 @@
    Let the network/API calls reach the backend; only static Vite assets
    (hashed filenames) are cached for snappy installs + repeat loads. */
 
-const STATIC_CACHE = 'solarsurplus-static-v2';
+const STATIC_CACHE = 'solarsurplus-static-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

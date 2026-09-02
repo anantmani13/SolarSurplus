@@ -62,6 +62,7 @@ async def generate_forecast(user_input: UserInput):
             battery_capacity_kwh=user_input.battery_capacity_kwh,
             current_charge_percent=user_input.current_battery_charge,
             battery_age_years=user_input.battery_age_years,
+            language=user_input.language,
         )
 
         # 4. Build hourly forecast entries

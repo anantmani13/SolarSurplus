@@ -4,6 +4,7 @@ import {
   Tooltip, ResponsiveContainer, Legend, ReferenceLine
 } from 'recharts';
 import { Zap, Sun, Wind, TrendingUp } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -26,7 +27,8 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function ForecastChart({ data, title = 'Solar Forecast & Irradiance' }) {
+export default function ForecastChart({ data, title }) {
+  const { t } = useI18n();
   const [viewMode, setViewMode] = useState('power'); // 'power' | 'weather' | 'export'
 
   if (!data?.length) return null;
@@ -73,7 +75,7 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
               transition: 'all 0.2s',
             }}
           >
-            <Zap size={13} /> Power (kWh)
+            <Zap size={13} /> {t('chart.power')}
           </button>
           <button
             type="button"
@@ -93,7 +95,7 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
               transition: 'all 0.2s',
             }}
           >
-            <Sun size={13} /> Irradiance & Weather
+            <Sun size={13} /> {t('chart.weather')}
           </button>
           <button
             type="button"
@@ -113,7 +115,7 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
               transition: 'all 0.2s',
             }}
           >
-            <TrendingUp size={13} /> Net Export
+            <TrendingUp size={13} /> {t('chart.export')}
           </button>
         </div>
       </div>
@@ -137,9 +139,9 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
               <YAxis stroke="#64748b" tick={{ fontSize: 11 }} unit=" kWh" />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13 }} />
-              <Area type="monotone" dataKey="Generation" stroke="#10B981" fill="url(#gradGen)" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#10B981' }} unit=" kWh" />
-              <Area type="monotone" dataKey="Surplus" stroke="#3B82F6" fill="url(#gradSurplus)" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#3B82F6' }} unit=" kWh" />
-              <Line type="monotone" dataKey="Consumption" stroke="#F59E0B" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#F59E0B' }} unit=" kWh" />
+              <Area type="monotone" dataKey="Generation" name={t('series.gen')} stroke="#10B981" fill="url(#gradGen)" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#10B981' }} unit=" kWh" />
+              <Area type="monotone" dataKey="Surplus" name={t('series.surplus')} stroke="#3B82F6" fill="url(#gradSurplus)" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#3B82F6' }} unit=" kWh" />
+              <Line type="monotone" dataKey="Consumption" name={t('series.cons')} stroke="#F59E0B" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#F59E0B' }} unit=" kWh" />
             </ComposedChart>
           ) : viewMode === 'weather' ? (
             <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -155,11 +157,11 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
               <YAxis yAxisId="right" orientation="right" stroke="#38BDF8" tick={{ fontSize: 11 }} unit=" °C/ms" />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13 }} />
-              <Area yAxisId="left" type="monotone" dataKey="GHI" name="GHI Solar Irradiance" stroke="#F59E0B" fill="url(#gradGHI)" strokeWidth={2} dot={false} unit=" W/m²" />
-              <Line yAxisId="left" type="monotone" dataKey="DNI" name="DNI Direct Irradiance" stroke="#FB7185" strokeWidth={1.5} strokeDasharray="4 4" dot={false} unit=" W/m²" />
-              <Line yAxisId="right" type="monotone" dataKey="CellTemp" name="PV Cell Temp" stroke="#EF4444" strokeWidth={2} dot={false} unit=" °C" />
-              <Line yAxisId="right" type="monotone" dataKey="Temp" name="Air Temp" stroke="#38BDF8" strokeWidth={1.5} dot={false} unit=" °C" />
-              <Line yAxisId="right" type="monotone" dataKey="Wind" name="Wind Speed" stroke="#A7F3D0" strokeWidth={1.5} strokeDasharray="3 3" dot={false} unit=" m/s" />
+              <Area yAxisId="left" type="monotone" dataKey="GHI" name={t('series.ghi')} stroke="#F59E0B" fill="url(#gradGHI)" strokeWidth={2} dot={false} unit=" W/m²" />
+              <Line yAxisId="left" type="monotone" dataKey="DNI" name={t('series.dni')} stroke="#FB7185" strokeWidth={1.5} strokeDasharray="4 4" dot={false} unit=" W/m²" />
+              <Line yAxisId="right" type="monotone" dataKey="CellTemp" name={t('series.celltemp')} stroke="#EF4444" strokeWidth={2} dot={false} unit=" °C" />
+              <Line yAxisId="right" type="monotone" dataKey="Temp" name={t('series.airtemp')} stroke="#38BDF8" strokeWidth={1.5} dot={false} unit=" °C" />
+              <Line yAxisId="right" type="monotone" dataKey="Wind" name={t('series.wind')} stroke="#A7F3D0" strokeWidth={1.5} strokeDasharray="3 3" dot={false} unit=" m/s" />
             </ComposedChart>
           ) : (
             <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -171,14 +173,14 @@ export default function ForecastChart({ data, title = 'Solar Forecast & Irradian
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval={6} angle={-28} height={56} textAnchor="end" />
-              <YAxis yAxisId="left" stroke="#60A5FA" tick={{ fontSize: 11 }} unit=" kWh" label={{ value: 'Grid Export (kWh)', angle: -90, position: 'insideLeft', style: { fill: '#60A5FA', fontSize: 11 } }} />
-              <YAxis yAxisId="right" orientation="right" stroke="#A78BFA" tick={{ fontSize: 11 }} domain={[0, 100]} unit=" %" label={{ value: 'Battery SoC', angle: 90, position: 'insideRight', style: { fill: '#A78BFA', fontSize: 11 } }} />
+              <YAxis yAxisId="left" stroke="#60A5FA" tick={{ fontSize: 11 }} unit=" kWh" label={{ value: t('axis.gridexport.short'), angle: -90, position: 'insideLeft', style: { fill: '#60A5FA', fontSize: 11 } }} />
+              <YAxis yAxisId="right" orientation="right" stroke="#A78BFA" tick={{ fontSize: 11 }} domain={[0, 100]} unit=" %" label={{ value: t('axis.soc'), angle: 90, position: 'insideRight', style: { fill: '#A78BFA', fontSize: 11 } }} />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13 }} />
-              <ReferenceLine yAxisId="right" y={100} stroke="#A78BFA" strokeDasharray="6 4" strokeOpacity={0.6} label={{ value: 'Battery Full', position: 'insideTopRight', fill: '#A78BFA', fontSize: 11 }} />
-              <Area yAxisId="left" type="monotone" dataKey="NetExport" name="Surplus Exported to Grid" stroke="#3B82F6" fill="url(#gradExport)" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#3B82F6' }} unit=" kWh" />
-              <Area yAxisId="left" type="monotone" dataKey="Surplus" name="Total Surplus" stroke="#34D399" strokeWidth={1.5} strokeDasharray="4 3" strokeOpacity={0.7} fill="none" dot={false} unit=" kWh" />
-              <Line yAxisId="right" type="monotone" dataKey="BatterySoC" name="Battery SoC" stroke="#A78BFA" strokeWidth={2} dot={false} unit=" %" />
+              <ReferenceLine yAxisId="right" y={100} stroke="#A78BFA" strokeDasharray="6 4" strokeOpacity={0.6} label={{ value: t('series.battfull'), position: 'insideTopRight', fill: '#A78BFA', fontSize: 11 }} />
+              <Area yAxisId="left" type="monotone" dataKey="NetExport" name={t('series.exported')} stroke="#3B82F6" fill="url(#gradExport)" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#3B82F6' }} unit=" kWh" />
+              <Area yAxisId="left" type="monotone" dataKey="Surplus" name={t('series.totalsurplus')} stroke="#34D399" strokeWidth={1.5} strokeDasharray="4 3" strokeOpacity={0.7} fill="none" dot={false} unit=" kWh" />
+              <Line yAxisId="right" type="monotone" dataKey="BatterySoC" name={t('series.soc')} stroke="#A78BFA" strokeWidth={2} dot={false} unit=" %" />
             </ComposedChart>
           )}
         </ResponsiveContainer>

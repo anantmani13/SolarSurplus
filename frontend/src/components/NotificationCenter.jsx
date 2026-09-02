@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Bell, Zap, Sun, AlertTriangle, CheckCircle, Info, TrendingUp } from 'lucide-react';
 import { getTariffForCoordinates } from '../data/tariffData';
+import { useI18n, f } from '../i18n';
 
-const SEVERITY_META = {
-  info: { icon: Info, color: 'var(--blue-400)', label: 'Info' },
-  success: { icon: CheckCircle, color: 'var(--emerald-400)', label: 'Good News' },
-  warning: { icon: AlertTriangle, color: 'var(--amber-400)', label: 'Heads Up' },
-  critical: { icon: AlertTriangle, color: 'var(--red-400)', label: 'Action Needed' },
-};
+const SEVERITY_META = (t) => ({
+  info: { icon: Info, color: 'var(--blue-400)', label: t('sev.info') },
+  success: { icon: CheckCircle, color: 'var(--emerald-400)', label: t('sev.success') },
+  warning: { icon: AlertTriangle, color: 'var(--amber-400)', label: t('sev.warning') },
+  critical: { icon: AlertTriangle, color: 'var(--red-400)', label: t('sev.critical') },
+});
 
 const nowLabel = () =>
   new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) +
@@ -15,6 +16,7 @@ const nowLabel = () =>
   new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
 export default function NotificationCenter({ predictions, location }) {
+  const { t } = useI18n();
   const [tariffRate, setTariffRate] = useState(3.0);
   const [stateName, setStateName] = useState(null);
 
@@ -38,8 +40,8 @@ export default function NotificationCenter({ predictions, location }) {
     if (summary.total_surplus_kwh > 0) {
       notifications.push({
         severity: 'success',
-        title: 'Surplus Energy Detected',
-        message: `Your system will generate ${summary.total_surplus_kwh.toFixed(1)} kWh surplus energy over the forecast period. Store it in the battery or use high-power appliances during peak hours.`,
+        title: t('note.surplus.title'),
+        message: f(t('note.surplus.msg'), { v: summary.total_surplus_kwh.toFixed(1) }),
         time: nowLabel(),
       });
     }
@@ -48,8 +50,12 @@ export default function NotificationCenter({ predictions, location }) {
       const dailyExport = summary.grid_export_kwh / (summary.forecast_days || 7);
       notifications.push({
         severity: 'success',
-        title: 'Grid Export Opportunity',
-        message: `You have ~${dailyExport.toFixed(1)} kWh/day of exportable surplus. Under net metering this could earn ≈ ₹${(dailyExport * tariffRate).toFixed(1)}/day${stateName ? ` at ${stateName}'s rate` : ''}.`,
+        title: t('note.export.title'),
+        message: f(t('note.export.msg'), {
+          v: dailyExport.toFixed(1),
+          r: (dailyExport * tariffRate).toFixed(1),
+          s: stateName ? f(t('note.export.state'), { s: stateName }) : '',
+        }),
         time: nowLabel(),
       });
     }
@@ -57,15 +63,15 @@ export default function NotificationCenter({ predictions, location }) {
     if (summary.self_sufficiency_percent >= 100) {
       notifications.push({
         severity: 'success',
-        title: 'Fully Self-Sufficient!',
-        message: `Your solar system covers ${summary.self_sufficiency_percent.toFixed(0)}% of your consumption. You're energy independent! Consider net metering to earn from surplus.`,
+        title: t('note.full.title'),
+        message: f(t('note.full.msg'), { v: summary.self_sufficiency_percent.toFixed(0) }),
         time: nowLabel(),
       });
     } else if (summary.self_sufficiency_percent < 50) {
       notifications.push({
         severity: 'warning',
-        title: 'Low Self-Sufficiency',
-        message: `Your system only covers ${summary.self_sufficiency_percent.toFixed(0)}% of consumption. Consider reducing usage during non-solar hours or expanding panel capacity.`,
+        title: t('note.lowself.title'),
+        message: f(t('note.lowself.msg'), { v: summary.self_sufficiency_percent.toFixed(0) }),
         time: nowLabel(),
       });
     }
@@ -73,8 +79,11 @@ export default function NotificationCenter({ predictions, location }) {
     if (summary.battery_degradation_percent > 10) {
       notifications.push({
         severity: 'warning',
-        title: 'Battery Degradation Notice',
-        message: `Your battery has degraded by ${summary.battery_degradation_percent.toFixed(1)}%. Usable capacity is now ${summary.usable_battery_capacity_kwh.toFixed(1)} kWh.`,
+        title: t('note.degrade.title'),
+        message: f(t('note.degrade.msg'), {
+          v: summary.battery_degradation_percent.toFixed(1),
+          c: summary.usable_battery_capacity_kwh.toFixed(1),
+        }),
         time: nowLabel(),
       });
     }
@@ -82,8 +91,8 @@ export default function NotificationCenter({ predictions, location }) {
     if (summary.final_battery_soc_percent < 30) {
       notifications.push({
         severity: 'critical',
-        title: 'Low Battery Forecast',
-        message: `Battery is projected to reach ${summary.final_battery_soc_percent.toFixed(0)}% by end of forecast. Reduce evening consumption to preserve charge.`,
+        title: t('note.lowbatt.title'),
+        message: f(t('note.lowbatt.msg'), { v: summary.final_battery_soc_percent.toFixed(0) }),
         time: nowLabel(),
       });
     }
@@ -109,8 +118,8 @@ export default function NotificationCenter({ predictions, location }) {
       const maxHour = avgByHour[0];
       notifications.push({
         severity: 'info',
-        title: 'Peak Solar Window',
-        message: `Solar generation peaks between ${start}:00 – ${end}:00 (~${maxHour.avg.toFixed(1)} kWh/hr). Schedule charging and heavy appliances now.`,
+        title: t('note.peak.title'),
+        message: f(t('note.peak.msg'), { s: start, e: end, v: maxHour.avg.toFixed(1) }),
         time: nowLabel(),
       });
     }
@@ -119,11 +128,14 @@ export default function NotificationCenter({ predictions, location }) {
     const solarHours = hourly.filter((h) => new Date(h.timestamp).getDate() === new Date(hourly[0].timestamp).getDate());
     const fullHour = solarHours.find((h) => (h.battery_soc_percent || 0) >= 99);
     if (fullHour) {
-      const t = new Date(fullHour.timestamp);
+      const tfull = new Date(fullHour.timestamp);
       notifications.push({
         severity: 'info',
-        title: 'Battery Full Alert',
-        message: `Battery reaches ~100% by ${t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}. Surplus generated after that will be exported${summaryNoGrid() ? ' — wasted without net metering' : ''}.`,
+        title: t('note.battfull.title'),
+        message: f(t('note.battfull.msg'), {
+          t: tfull.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          w: summaryNoGrid() ? t('note.battfull.waste') : '',
+        }),
         time: nowLabel(),
       });
     }
@@ -135,8 +147,8 @@ export default function NotificationCenter({ predictions, location }) {
       const drop = Math.min(60, Math.round((avgCloud - 60) * 1.2));
       notifications.push({
         severity: 'warning',
-        title: 'Weather Impact',
-        message: `Cloud cover is expected above ${Math.round(avgCloud)}% in several hours — generation may drop by up to ~${drop}% then. Charge early to ride through it.`,
+        title: t('note.weather.title'),
+        message: f(t('note.weather.msg'), { v: Math.round(avgCloud), d: drop }),
         time: nowLabel(),
       });
     }
@@ -149,8 +161,8 @@ export default function NotificationCenter({ predictions, location }) {
         .join(', ');
       notifications.push({
         severity: 'info',
-        title: 'Optimal Battery Usage Windows',
-        message: `Best times to use battery power: ${times}. These are your highest-deficit periods when grid power is most expensive.`,
+        title: t('note.windows.title'),
+        message: f(t('note.windows.msg'), { t: times }),
         time: nowLabel(),
       });
     }
@@ -165,12 +177,12 @@ export default function NotificationCenter({ predictions, location }) {
       <div className="glass-card">
         <h3 className="chart-title">
           <Bell size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-          Energy Alerts
+          {t('alerts.title')}
         </h3>
         <div className="empty-state">
           <div className="empty-state-icon">🔔</div>
-          <h3>No alerts yet</h3>
-          <p>Generate a forecast to receive energy optimization alerts</p>
+          <h3>{t('alerts.empty.title')}</h3>
+          <p>{t('alerts.empty.text')}</p>
         </div>
       </div>
     );
@@ -185,13 +197,13 @@ export default function NotificationCenter({ predictions, location }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h3 className="chart-title" style={{ margin: 0 }}>
           <Bell size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-          Energy Alerts
+          {t('alerts.title')}
         </h3>
-        <span className="badge badge-emerald">{sorted.length} alerts</span>
+        <span className="badge badge-emerald">{f(t('alerts.count'), { n: sorted.length })}</span>
       </div>
 
       {sorted.map((notif, i) => {
-        const meta = SEVERITY_META[notif.severity] || SEVERITY_META.info;
+        const meta = SEVERITY_META(t)[notif.severity] || SEVERITY_META(t).info;
         const Icon = notif.severity === 'info' ? Sun : notif.severity === 'success' ? Zap : notif.severity === 'critical' ? AlertTriangle : TrendingUp;
         return (
           <div

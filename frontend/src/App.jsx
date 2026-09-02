@@ -4,7 +4,7 @@ import { RefreshCw, AlertTriangle, Clock } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { generateForecast, warmUpBackend } from './services/api';
 import { saveUserEntry, savePrediction, saveNotification } from './services/firebase';
-import { useI18n } from './i18n';
+import { useI18n, f } from './i18n';
 
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
@@ -31,15 +31,15 @@ const ChartSuspense = () => (
   </div>
 );
 
-function formatAgo(ts) {
+function formatAgo(ts, t) {
   if (!ts) return null;
   const diff = Date.now() - ts;
-  if (diff < 60 * 1000) return 'just now';
+  if (diff < 60 * 1000) return t('ago.now');
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return f(t('ago.mins'), { m: String(mins) });
   const hrs = Math.floor(mins / 60);
   const rem = mins % 60;
-  return `${hrs}h ${rem}m ago`;
+  return f(t('ago.hrs'), { h: String(hrs), m: String(rem) });
 }
 
 export default function App() {
@@ -91,13 +91,13 @@ export default function App() {
       // Notify users when the ML backend is down so they know why the
       // numbers changed vs a previous LSTM run.
       if (result.model_used?.includes('Physics')) {
-        toast('ML backend unavailable — showing physics-based estimate. Will retry automatically.', {
+        toast(t('toast.backenddown'), {
           icon: '⚠️',
           duration: 6000,
           style: { background: '#111827', color: '#fbbf24', border: '1px solid rgba(251, 191, 36, 0.3)' },
         });
       } else {
-        toast.success('Forecast generated successfully!', {
+        toast.success(t('toast.success'), {
           style: {
             background: '#111827',
             color: '#f1f5f9',
@@ -119,8 +119,8 @@ export default function App() {
         if (result.daily_summary?.total_surplus_kwh > 0) {
           saveNotification(user.uid, {
             type: 'surplus',
-            title: 'Surplus Energy Detected',
-            message: `${result.daily_summary.total_surplus_kwh.toFixed(1)} kWh surplus forecasted`,
+            title: t('note.surplus.title'),
+            message: f(t('notify.surplus.msg'), { kwh: result.daily_summary.total_surplus_kwh.toFixed(1) }),
           }).catch(e => console.warn(e));
         }
       }
@@ -128,8 +128,8 @@ export default function App() {
       console.error('Forecast error:', err);
       toast.error(
         err.message.includes('fetch')
-          ? 'Cannot connect to backend. Make sure the FastAPI server is running.'
-          : `Forecast failed: ${err.message}`,
+          ? t('toast.err.connect')
+          : f(t('toast.err.fail'), { msg: err.message }),
         {
           style: {
             background: '#111827',
@@ -142,11 +142,11 @@ export default function App() {
     } finally {
       setForecastLoading(false);
     }
-  }, [user]);
+  }, [user, t]);
 
   const handleAuth = (authUser) => {
     setShowAuth(false);
-    toast.success(`Welcome, ${authUser.email}!`, {
+    toast.success(f(t('toast.welcome'), { email: authUser.email }), {
       style: { background: '#111827', color: '#f1f5f9', border: '1px solid rgba(16, 185, 129, 0.3)' },
     });
   };
@@ -256,7 +256,7 @@ export default function App() {
                     {generatedAt && (
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Clock size={12} />
-                        {t('generated.ago')}: {formatAgo(generatedAt)} · {t('dashboard.stale.hint')}
+                        {t('generated.ago')}: {formatAgo(generatedAt, t)} · {t('dashboard.stale.hint')}
                       </span>
                     )}
                     <button

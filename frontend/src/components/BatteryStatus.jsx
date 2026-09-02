@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { BatteryCharging, BatteryMedium, BatteryFull, BatteryLow, ArrowUpRight, ArrowDownRight, Activity, Zap } from 'lucide-react';
+import { useI18n } from '../i18n';
 
-const ACTION_STYLES = {
-  charging: { label: 'Charging', color: '#10B981', Icon: ArrowUpRight },
-  discharging: { label: 'Discharging', color: '#F59E0B', Icon: ArrowDownRight },
-  idle: { label: 'Idle', color: '#3B82F6', Icon: Activity },
-  low: { label: 'Low Battery', color: '#EF4444', Icon: ArrowUpRight },
-};
+function makeStyles(t) {
+  return {
+    charging: { label: t('battery.charging'), color: '#10B981', Icon: ArrowUpRight },
+    discharging: { label: t('battery.discharging'), color: '#F59E0B', Icon: ArrowDownRight },
+    idle: { label: t('battery.idle'), color: '#3B82F6', Icon: Activity },
+    low: { label: t('battery.low'), color: '#EF4444', Icon: ArrowUpRight },
+  };
+}
 
 function Sparkline({ data, color }) {
   if (!data || data.length < 2) return null;
@@ -39,6 +42,8 @@ function Sparkline({ data, color }) {
 }
 
 export default function BatteryStatus({ soc = 50, action = 'idle', capacityKwh = 10, chargeKwh = 5, socHistory = [] }) {
+  const { t } = useI18n();
+  const ACTION_STYLES = makeStyles(t);
   const [displaySoc, setDisplaySoc] = useState(soc);
   const prevSoc = useRef(soc);
 
@@ -64,7 +69,9 @@ export default function BatteryStatus({ soc = 50, action = 'idle', capacityKwh =
 
   const clampedSoc = Math.min(100, Math.max(0, displaySoc));
   const isLow = soc < 20;
-  const statusKey = isLow ? 'low' : action;
+  // Backend returns 'charge'/'discharge'; the UI uses 'charging'/'discharging'.
+  const normalizedAction = action === 'charge' ? 'charging' : action === 'discharge' ? 'discharging' : action;
+  const statusKey = isLow ? 'low' : normalizedAction;
   const status = ACTION_STYLES[statusKey] || ACTION_STYLES.idle;
   const BatteryIcon = isLow ? BatteryLow : soc < 60 ? BatteryMedium : BatteryFull;
   const batteryPercent = Math.min(100, Math.max(2, clampedSoc));
@@ -74,33 +81,33 @@ export default function BatteryStatus({ soc = 50, action = 'idle', capacityKwh =
     <div className="glass-card battery-card">
       <div className="battery-header">
         <div>
-          <h3 className="chart-title" style={{ marginBottom: 4 }}>Battery Status</h3>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Live state of charge</p>
+          <h3 className="chart-title" style={{ marginBottom: 4 }}>{t('battery.title')}</h3>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('battery.subtitle')}</p>
         </div>
         <span
           className="battery-chip"
           style={{ color: status.color, borderColor: `${status.color}66`, background: `${status.color}1A` }}
         >
-          <span className={`battery-dot ${action}`} style={{ background: status.color, boxShadow: `0 0 8px ${status.color}` }} />
+          <span className={`battery-dot ${normalizedAction}`} style={{ background: status.color, boxShadow: `0 0 8px ${status.color}` }} />
           {status.label}
         </span>
       </div>
 
-      <div className={`battery-visual battery-visual-${action}`}>
+      <div className={`battery-visual battery-visual-${normalizedAction}`}>
         <div className="battery-tip" />
-        <div className={`battery-outer ${action}`}>
+        <div className={`battery-outer ${normalizedAction}`}>
           <div className="battery-ticks" />
           <div className={`battery-fill ${statusKey}`} style={{ height: `${batteryPercent}%` }}>
             <div className="battery-wave battery-wave-a" />
             <div className="battery-wave battery-wave-b" />
-            {action === 'charging' && (
+            {normalizedAction === 'charging' && (
               <>
                 <span className="battery-bubble" style={{ left: '26%', animationDelay: '0s' }} />
                 <span className="battery-bubble" style={{ left: '50%', animationDelay: '0.8s' }} />
                 <span className="battery-bubble" style={{ left: '70%', animationDelay: '1.6s' }} />
               </>
             )}
-            {action === 'discharging' && (
+            {normalizedAction === 'discharging' && (
               <>
                 <span className="battery-drip" style={{ left: '40%', animationDelay: '0.3s' }} />
                 <span className="battery-drip" style={{ left: '63%', animationDelay: '1.1s' }} />
@@ -119,7 +126,7 @@ export default function BatteryStatus({ soc = 50, action = 'idle', capacityKwh =
         <div className="battery-trend">
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
             <Activity size={13} color="var(--text-muted)" />
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>SoC — last 24h</span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('battery.trend')}</span>
             <span style={{ fontSize: 11, marginLeft: 'auto', color: status.color, fontWeight: 700 }}>
               {((last24[last24.length - 1] || 0) - (last24[0] || 0) >= 0 ? '+' : '')}
               {((last24[last24.length - 1] || 0) - (last24[0] || 0)).toFixed(0)}%
@@ -134,19 +141,19 @@ export default function BatteryStatus({ soc = 50, action = 'idle', capacityKwh =
       <div className="battery-flowbar">
         <div className="battery-flow-item">
           <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <BatteryIcon size={12} /> Stored
+            <BatteryIcon size={12} /> {t('battery.stored')}
           </div>
           <div style={{ fontSize: 17, fontWeight: 700 }}>{chargeKwh.toFixed(1)} kWh</div>
         </div>
         <div className="battery-flow-item">
           <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Zap size={12} /> Capacity
+            <Zap size={12} /> {t('battery.capacity')}
           </div>
           <div style={{ fontSize: 17, fontWeight: 700 }}>{capacityKwh.toFixed(1)} kWh</div>
         </div>
         <div className="battery-flow-item">
           <status.Icon size={15} style={{ color: status.color }} />
-          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Action</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('battery.action')}</div>
           <div style={{ fontSize: 15, fontWeight: 700, color: status.color }}>{status.label}</div>
         </div>
       </div>

@@ -1,28 +1,29 @@
 import { useState } from 'react';
 import { registerUser, loginUser, loginWithGoogle } from '../services/firebase';
 import { Zap, Mail, Lock, X } from 'lucide-react';
+import { useI18n } from '../i18n';
 
-function friendlyAuthError(err) {
+function friendlyAuthError(err, t) {
   const code =
     err?.code || err?.message?.split('(')?.[1]?.replace(')', '') || '';
-  const msg = err?.message || 'Authentication failed';
+  const msg = err?.message || t('auth.err.generic');
   if (msg.includes('not configured')) {
-    return 'Firebase is not configured. Add your Firebase credentials to the .env file.';
+    return t('auth.err.notconfigured');
   }
   const map = {
-    'auth/user-not-found': 'No account found with this email',
-    'auth/wrong-password': 'Incorrect password. Try again',
-    'auth/invalid-credential': 'Invalid email or password',
-    'auth/invalid-email': 'Enter a valid email address',
-    'auth/email-already-in-use': 'An account with this email already exists',
-    'auth/weak-password': 'Password should be at least 6 characters',
-    'auth/popup-closed-by-user': 'Sign-in popup was closed before finishing',
-    'auth/cancelled-popup-request': 'Sign-in popup was cancelled',
-    'auth/popup-blocked': 'Sign-in popup was blocked by your browser. Allow popups and try again',
-    'auth/unauthorized-domain': 'This domain is not authorized for Google sign-in. Add it in Firebase Console → Authentication → Settings',
-    'auth/account-exists-with-different-credential': 'An account already exists with this email. Sign in with email/password instead',
-    'auth/network-request-failed': 'Network error. Check your connection and try again',
-    'auth/too-many-requests': 'Too many attempts. Wait a bit and try again',
+    'auth/user-not-found': t('auth.err.notfound'),
+    'auth/wrong-password': t('auth.err.wrongpass'),
+    'auth/invalid-credential': t('auth.err.invalidcred'),
+    'auth/invalid-email': t('auth.err.invalidemail'),
+    'auth/email-already-in-use': t('auth.err.inuse'),
+    'auth/weak-password': t('auth.err.weakpass'),
+    'auth/popup-closed-by-user': t('auth.err.popupclosed'),
+    'auth/cancelled-popup-request': t('auth.err.popupcancelled'),
+    'auth/popup-blocked': t('auth.err.popupblocked'),
+    'auth/unauthorized-domain': t('auth.err.unauthdomain'),
+    'auth/account-exists-with-different-credential': t('auth.err.diffcred'),
+    'auth/network-request-failed': t('auth.err.network'),
+    'auth/too-many-requests': t('auth.err.tomany'),
   };
   return map[code] || msg;
 }
@@ -39,6 +40,7 @@ function GoogleIcon({ size = 18 }) {
 }
 
 export default function AuthModal({ onClose, onAuth }) {
+  const { t } = useI18n();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,7 +58,7 @@ export default function AuthModal({ onClose, onAuth }) {
         : await registerUser(email, password);
       onAuth(user);
     } catch (err) {
-      setError(friendlyAuthError(err));
+      setError(friendlyAuthError(err, t));
     } finally {
       setLoading(false);
     }
@@ -69,7 +71,7 @@ export default function AuthModal({ onClose, onAuth }) {
       const user = await loginWithGoogle();
       onAuth(user);
     } catch (err) {
-      setError(friendlyAuthError(err));
+      setError(friendlyAuthError(err, t));
     } finally {
       setLoading(false);
     }
@@ -92,11 +94,11 @@ export default function AuthModal({ onClose, onAuth }) {
           <div className="navbar-brand-icon" style={{ margin: '0 auto 16px', width: 48, height: 48 }}>
             <Zap size={24} color="white" />
           </div>
-          <h2>{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
+          <h2>{isLogin ? t('auth.welcome') : t('auth.create')}</h2>
           <p className="subtitle">
             {isLogin
-              ? 'Sign in to access and save your solar forecasts'
-              : 'Start optimizing your solar energy usage'}
+              ? t('auth.login.sub')
+              : t('auth.signup.sub')}
           </p>
         </div>
 
@@ -114,20 +116,20 @@ export default function AuthModal({ onClose, onAuth }) {
           ) : (
             <>
               <GoogleIcon size={18} />
-              Continue with Google
+              {t('auth.google')}
             </>
           )}
         </button>
 
         <div className="auth-divider">
-          <span>or sign in with email</span>
+          <span>{t('auth.divider')}</span>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">
               <Mail size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Email
+              {t('auth.email')}
             </label>
             <input
               type="email"
@@ -142,7 +144,7 @@ export default function AuthModal({ onClose, onAuth }) {
           <div className="form-group">
             <label className="form-label">
               <Lock size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Password
+              {t('auth.password')}
             </label>
             <input
               type="password"
@@ -164,17 +166,17 @@ export default function AuthModal({ onClose, onAuth }) {
             {loading ? (
               <span className="spinner" />
             ) : isLogin ? (
-              'Sign In'
+              t('auth.signin')
             ) : (
-              'Create Account'
+              t('auth.create') 
             )}
           </button>
         </form>
 
         <div className="auth-toggle">
-          {isLogin ? "Don't have an account? " : 'Already have an account? '}
+          {isLogin ? t('auth.donthave') : t('auth.have')}
           <button onClick={() => { setIsLogin(!isLogin); setError(''); }}>
-            {isLogin ? 'Sign Up' : 'Sign In'}
+            {isLogin ? t('auth.signup.link') : t('auth.signin.link')}
           </button>
         </div>
       </div>

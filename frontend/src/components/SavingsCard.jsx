@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Wallet, Settings2, PiggyBank, TrendingUp, Clock, Info } from 'lucide-react';
 import { getTariffForCoordinates } from '../data/tariffData';
-import { useI18n } from '../i18n';
+import { useI18n, f } from '../i18n';
 
 const RETAIL_RATE = 7.5; // ₹/kWh approx. national retail
 const INSTALL_COST_PER_KW = 70000; // ₹/kW typical rooftop price
@@ -56,7 +56,7 @@ export default function SavingsCard({ summary, input }) {
             {t('savings.title')}
           </h3>
           <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            {capacity} kW · {capacity * INSTALL_COST_PER_KW >= 0 ? `Capex ≈ ${inr(capex)}` : ''}
+            {capacity} kW · {f(t('savings.capex'), { amt: inr(capex) })}
           </p>
         </div>
       </div>
@@ -71,7 +71,7 @@ export default function SavingsCard({ summary, input }) {
             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}> /mo</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-            ≈ {inr(yearly)} / year
+            ≈ {f(t('savings.peryear'), { amt: inr(yearly) })}
           </div>
         </div>
 
@@ -84,7 +84,7 @@ export default function SavingsCard({ summary, input }) {
             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}> /mo</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-            {billDay.toFixed(0)} kWh/day consumed → {billWithSolar.toFixed(0)} kWh equivalent
+            {f(t('savings.kwhconsumed'), { a: billDay.toFixed(0), b: billWithSolar.toFixed(0) })}
           </div>
         </div>
 
@@ -97,7 +97,7 @@ export default function SavingsCard({ summary, input }) {
             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}> /mo</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-            {exportDay.toFixed(1)} kWh/day @ ₹{exportRate.toFixed(2)} ({tariffInfo.state || 'default'})
+            {f(t('savings.exportday'), { kwh: exportDay.toFixed(1), rate: exportRate.toFixed(2), state: tariffInfo.state || t('savings.default') })}
           </div>
         </div>
 
@@ -107,10 +107,10 @@ export default function SavingsCard({ summary, input }) {
           </div>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#a78bfa' }}>
             {paybackYears > 0 ? paybackYears.toFixed(1) : '—'}
-            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}> yrs</span>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}> {t('savings.yrs')}</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-            {inr(capex)} installed · {inr(yearly)}/yr saved
+            {f(t('savings.installed'), { capex: inr(capex), yearly: inr(yearly) })}
           </div>
         </div>
       </div>

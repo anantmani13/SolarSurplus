@@ -12,6 +12,7 @@ def calculate_battery_schedule(
     battery_capacity_kwh: float,
     current_charge_percent: float,
     battery_age_years: float = 0,
+    language: str = "en",
 ) -> dict:
     """
     Calculate optimal battery charge/discharge schedule.
@@ -130,7 +131,7 @@ def calculate_battery_schedule(
         schedule, total_surplus, total_deficit,
         total_generated, total_consumed,
         usable_capacity, charge_kwh, num_days,
-        total_grid_export,
+        total_grid_export, language,
     )
 
     # Daily summary
@@ -169,8 +170,10 @@ def _generate_recommendations(
     final_charge: float,
     num_days: float,
     total_grid_export: float = 0.0,
+    language: str = "en",
 ) -> list[str]:
-    """Generate actionable recommendations based on forecast."""
+    """Generate actionable recommendations based on forecast. Supports hi/en."""
+    hi = language.lower() == "hi"
     recs = []
 
     # Find peak generation hours
@@ -184,10 +187,16 @@ def _generate_recommendations(
     peak_start = min(peak_hours)
     peak_end = max(peak_hours)
 
-    recs.append(
-        f"☀️ Peak solar generation: {peak_start}:00 – {peak_end}:00. "
-        "Schedule high-consumption tasks (washing, AC) during these hours."
-    )
+    if hi:
+        recs.append(
+            f"☀️ चरम सौर उत्पादन: {peak_start}:00 – {peak_end}:00. "
+            "उच्च-खपत वाले काम (वॉशिंग मशीन, AC) इन घंटों में करें।"
+        )
+    else:
+        recs.append(
+            f"☀️ Peak solar generation: {peak_start}:00 – {peak_end}:00. "
+            "Schedule high-consumption tasks (washing, AC) during these hours."
+        )
 
     # Find best battery discharge hours
     discharge_hours = [e["hour_of_day"] for e in schedule if e["battery_action"] == "discharge"]
@@ -195,44 +204,81 @@ def _generate_recommendations(
         from collections import Counter
         common_discharge = Counter(discharge_hours).most_common(3)
         hours_str = ", ".join(f"{h}:00" for h, _ in common_discharge)
-        recs.append(
-            f"🔋 Best times to use battery power: {hours_str}. "
-            "Battery discharges during these deficit hours."
-        )
+        if hi:
+            recs.append(
+                f"🔋 बैटरी पावर उपयोग के सर्वोत्तम समय: {hours_str}. "
+                "इन अवधियों में बैटरी डिस्चार्ज होती है।"
+            )
+        else:
+            recs.append(
+                f"🔋 Best times to use battery power: {hours_str}. "
+                "Battery discharges during these deficit hours."
+            )
 
     # Self-sufficiency advice
     self_suff = (total_generated / max(total_consumed, 0.01)) * 100
     if self_suff >= 100:
-        recs.append(
-            f"✅ Your system generates {self_suff:.0f}% of your consumption. "
-            "You have surplus energy — consider net metering or selling back to the grid."
-        )
+        if hi:
+            recs.append(
+                f"✅ आपका सिस्टम आपकी खपत का {self_suff:.0f}% उत्पन्न करता है। "
+                "आपके पास अधिशेष ऊर्जा है — नेट मीटरिंग या ग्रिड को बेचने पर विचार करें।"
+            )
+        else:
+            recs.append(
+                f"✅ Your system generates {self_suff:.0f}% of your consumption. "
+                "You have surplus energy — consider net metering or selling back to the grid."
+            )
     elif self_suff >= 70:
-        recs.append(
-            f"⚡ Your system covers {self_suff:.0f}% of consumption. "
-            "Good self-sufficiency! Battery helps bridge the gap."
-        )
+        if hi:
+            recs.append(
+                f"⚡ आपका सिस्टम खपत का {self_suff:.0f}% पूरा करता है। "
+                "अच्छी आत्मनिर्भरता! बैटरी अंतर को पाटने में मदद करती है।"
+            )
+        else:
+            recs.append(
+                f"⚡ Your system covers {self_suff:.0f}% of consumption. "
+                "Good self-sufficiency! Battery helps bridge the gap."
+            )
     else:
-        recs.append(
-            f"⚠️ Your system covers only {self_suff:.0f}% of consumption. "
-            "Consider increasing solar panel capacity or reducing consumption."
-        )
+        if hi:
+            recs.append(
+                f"⚠️ आपका सिस्टम केवल खपत का {self_suff:.0f}% पूरा करता है। "
+                "सोलर पैनल क्षमता बढ़ाने या खपत घटाने पर विचार करें।"
+            )
+        else:
+            recs.append(
+                f"⚠️ Your system covers only {self_suff:.0f}% of consumption. "
+                "Consider increasing solar panel capacity or reducing consumption."
+            )
 
     # Battery sizing advice
     daily_surplus = total_surplus / max(num_days, 1)
     if daily_surplus > usable_capacity * 0.5:
-        recs.append(
-            f"📈 Daily surplus ({daily_surplus:.1f} kWh) exceeds 50% of battery capacity. "
-            "A larger battery could capture more free energy."
-        )
+        if hi:
+            recs.append(
+                f"📈 दैनिक अधिशेष ({daily_surplus:.1f} kWh) बैटरी क्षमता के 50% से अधिक है। "
+                "बड़ी बैटरी अधिक मुफ्त ऊर्जा संग्रह कर सकती है।"
+            )
+        else:
+            recs.append(
+                f"📈 Daily surplus ({daily_surplus:.1f} kWh) exceeds 50% of battery capacity. "
+                "A larger battery could capture more free energy."
+            )
 
     # Net metering / grid export advice
     daily_export = total_grid_export / max(num_days, 1)
     if daily_export > 0.5:
-        recs.append(
-            f"🔌 You have ~{daily_export:.1f} kWh/day of exportable surplus "
-            f"(≈₹{daily_export * 30 * 3.0:.0f}/month at ₹3.00/kWh). "
-            "Enroll in net metering under PM Surya Ghar to earn from it."
-        )
+        if hi:
+            recs.append(
+                f"🔌 आपके पास ~{daily_export:.1f} kWh/दिन निर्यात योग्य अधिशेष है "
+                f"(₹3.00/kWh पर ≈₹{daily_export * 30 * 3.0:.0f}/माह)। "
+                "इससे कमाई के लिए PM Surya Ghar के तहत नेट मीटरिंग में नामांकन करें।"
+            )
+        else:
+            recs.append(
+                f"🔌 You have ~{daily_export:.1f} kWh/day of exportable surplus "
+                f"(≈₹{daily_export * 30 * 3.0:.0f}/month at ₹3.00/kWh). "
+                "Enroll in net metering under PM Surya Ghar to earn from it."
+            )
 
     return recs

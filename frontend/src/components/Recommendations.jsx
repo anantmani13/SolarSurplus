@@ -1,4 +1,5 @@
 import { Lightbulb, Sun, Battery, Zap, Check, TrendingUp, Badge } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 const ICON_MAP = {
   Sun: <Sun size={18} />,
@@ -14,6 +15,12 @@ const CATEGORY_COLORS = {
   'Surplus Usage': 'var(--blue-400)',
   'Government Schemes': 'var(--amber-400)',
 };
+
+const CATEGORY_LABELS = (t) => ({
+  'Energy Optimization': t('recs.cat.energy'),
+  'Surplus Usage': t('recs.cat.surplus'),
+  'Government Schemes': t('recs.cat.gov'),
+});
 
 function normalizeRec(rec, idx) {
   if (typeof rec === 'string') {
@@ -32,6 +39,7 @@ function normalizeRec(rec, idx) {
 }
 
 export default function Recommendations({ recommendations }) {
+  const { t } = useI18n();
   if (!recommendations?.length) return null;
 
   const grouped = recommendations.reduce((acc, rec, idx) => {
@@ -44,13 +52,13 @@ export default function Recommendations({ recommendations }) {
     <div className="glass-card">
       <h3 className="chart-title">
         <Lightbulb size={18} style={{ marginRight: 8, verticalAlign: 'middle', color: 'var(--amber-400)' }} />
-        Smart Recommendations
+        {t('recs.title')}
       </h3>
 
       {Object.entries(grouped).map(([category, recs], groupIdx) => (
         <div key={category} style={{ marginBottom: groupIdx < Object.keys(grouped).length - 1 ? 14 : 0 }}>
           <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: CATEGORY_COLORS[category] || 'var(--text-muted)', marginBottom: 8 }}>
-            {category}
+            {CATEGORY_LABELS(t)[category] || category}
           </div>
           {recs.map((rec, i) => (
             <div

@@ -5,24 +5,32 @@ import { findEvWindows } from '../services/energyInsights';
 
 export default function EvScheduler({ hourly }) {
   const { t } = useI18n();
-  const [cap, setCap] = useState(40);
-  const [current, setCurrent] = useState(20);
-  const [target, setTarget] = useState(100);
-  const [rate, setRate] = useState(7);
+  const [capStr, setCapStr] = useState('40');
+  const [curStr, setCurStr] = useState('20');
+  const [tgtStr, setTgtStr] = useState('100');
+  const [rateStr, setRateStr] = useState('7');
+
+  const cap = parseFloat(capStr) || 0;
+  const current = parseFloat(curStr) || 0;
+  const target = parseFloat(tgtStr) || 0;
+  const rate = parseFloat(rateStr) || 0;
 
   const result = useMemo(
     () => findEvWindows(hourly || [], { capacityKwh: cap, currentPct: current, targetPct: target, chargeRateKw: rate }),
     [hourly, cap, current, target, rate],
   );
 
-  const num = (label, value, setter, min = 0, max = 500, step = 1) => (
+  // Uncontrolled inputs (defaultValue, no `value` binding) so the browser owns
+  // the text while typing — prevents React re-render artifacts like "020" and
+  // "shows 0 first". Values are read into state on change for the calculation.
+  const num = (label, defaultValue, setter, min = 0, max = 500, step = 1) => (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, fontWeight: 600 }}>
       {label}
       <input
         type="number"
         className="form-input"
-        value={value}
-        onChange={(e) => setter(parseFloat(e.target.value) || 0)}
+        defaultValue={defaultValue}
+        onChange={(e) => setter(e.target.value)}
         onWheel={(e) => e.target.blur()}
         min={min} max={max} step={step}
       />
@@ -40,10 +48,10 @@ export default function EvScheduler({ hourly }) {
           <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>{t('ev.sub')}</p>
 
           <div className="grid-2" style={{ marginTop: 14, gap: 10 }}>
-            {num(t('ev.battsize'), cap, setCap, 1, 200, 1)}
-            {num(t('ev.cur'), current, setCurrent, 0, 100, 1)}
-            {num(t('ev.target'), target, setTarget, 0, 100, 1)}
-            {num(t('ev.rate'), rate, setRate, 1, 50, 0.5)}
+            {num(t('ev.battsize'), '40', setCapStr, 1, 200, 1)}
+            {num(t('ev.cur'), '20', setCurStr, 0, 100, 1)}
+            {num(t('ev.target'), '100', setTgtStr, 0, 100, 1)}
+            {num(t('ev.rate'), '7', setRateStr, 1, 50, 0.5)}
           </div>
 
           {(result.mode === 'nosurplus' || (result.mode === 'partial' && result.windows.length === 0)) ? (

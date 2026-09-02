@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
   Sun, Battery, MapPin, Calendar, Gauge,
-  Zap, ArrowRight, Loader2, Search, Check
+  Zap, ArrowRight, Loader2, Search, Check, Compass
 } from 'lucide-react';
 import { reverseGeocode, formatLocationName } from '../services/geo';
+import { useI18n } from '../i18n';
 
 const DEFAULT_VALUES = {
   solar_panel_capacity_kw: 5,
@@ -14,9 +15,12 @@ const DEFAULT_VALUES = {
   latitude: 25.4934,  // Prayagraj (sensible default)
   longitude: 81.8675,
   avg_daily_consumption_kwh: 15,
+  tilt_deg: 30,
+  azimuth_deg: 180,
 };
 
 export default function InputForm({ onSubmit, loading }) {
+  const { t } = useI18n();
   const [form, setForm] = useState(DEFAULT_VALUES);
   const [geoStatus, setGeoStatus] = useState('idle'); // 'detecting' | 'success' | 'failed' | 'idle'
   const [cityName, setCityName] = useState('Prayagraj, UP');
@@ -148,9 +152,9 @@ export default function InputForm({ onSubmit, loading }) {
           <Sun size={20} />
         </div>
         <div>
-          <h2 style={{ fontSize: 20, fontWeight: 700 }}>System Configuration</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 700 }}>{t('form.config')}</h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            Enter your solar panel, battery, and location details
+            {t('form.config.sub')}
           </p>
         </div>
       </div>
@@ -271,6 +275,48 @@ export default function InputForm({ onSubmit, loading }) {
             />
             <span className="form-helper">Batteries degrade ~2%/year</span>
           </div>
+
+          {/* Panel Tilt */}
+          <div className="form-group">
+            <label className="form-label">
+              <Compass size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+              {t('form.tilt')}
+            </label>
+            <input
+              type="number"
+              className="form-input"
+              value={form.tilt_deg}
+              onChange={(e) => handleChange('tilt_deg', e.target.value)}
+              onWheel={(e) => e.target.blur()}
+              min="0"
+              max="90"
+              step="5"
+            />
+            <span className="form-helper">{t('form.tilt.helper')}</span>
+          </div>
+
+          {/* Panel Azimuth */}
+          <div className="form-group">
+            <label className="form-label">
+              <Compass size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+              {t('form.azimuth')}
+            </label>
+            <select
+              className="form-input"
+              value={form.azimuth_deg}
+              onChange={(e) => handleChange('azimuth_deg', parseInt(e.target.value, 10))}
+            >
+              <option value="0">North (0°)</option>
+              <option value="45">North-East (45°)</option>
+              <option value="90">East (90°)</option>
+              <option value="135">South-East (135°)</option>
+              <option value="180">South (180°) — Best for India</option>
+              <option value="225">South-West (225°)</option>
+              <option value="270">West (270°)</option>
+              <option value="315">North-West (315°)</option>
+            </select>
+            <span className="form-helper">{t('form.azimuth.helper')}</span>
+          </div>
         </div>
 
         {/* Location Section */}
@@ -309,7 +355,7 @@ export default function InputForm({ onSubmit, loading }) {
               <Search size={14} color="var(--text-muted)" style={{ marginRight: 8 }} />
               <input
                 type="text"
-                placeholder="Search city or town (e.g. Prayagraj, Delhi, Mumbai, Bengaluru, London...)"
+                placeholder={t('search.placeholder')}
                 value={citySearchQuery}
                 onChange={(e) => handleSearchCity(e.target.value)}
                 onFocus={() => { if (searchResults.length > 0) setShowDropdown(true); }}
@@ -418,11 +464,11 @@ export default function InputForm({ onSubmit, loading }) {
           {loading ? (
             <>
               <Loader2 size={20} className="spinner" />
-              Waking ML Engine & Generating Forecast...
+              {t('form.loading')}
             </>
           ) : (
             <>
-              Generate 7-Day Forecast
+              {t('form.submit')}
               <ArrowRight size={20} />
             </>
           )}

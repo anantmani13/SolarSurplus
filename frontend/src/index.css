@@ -1135,6 +1135,37 @@ body::before {
   to { transform: rotate(360deg); }
 }
 
+.spin {
+  animation: spin 0.6s linear infinite;
+}
+
+.chart-suspense {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.fallback-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 10px;
+  color: #fbbf24;
+}
+
+.nav-lang {
+  margin-left: 12px;
+  cursor: pointer;
+}
+
 .loading-screen {
   display: flex;
   flex-direction: column;

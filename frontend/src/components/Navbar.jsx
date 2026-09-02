@@ -1,9 +1,11 @@
-import { Sun, Battery, BarChart3, Bell, LogOut, Zap } from 'lucide-react';
+import { Sun, Battery, BarChart3, Bell, LogOut, Zap, Languages } from 'lucide-react';
 import { logoutUser } from '../services/firebase';
+import { toggleLanguage, useI18n } from '../i18n';
 
 export default function Navbar({ user, activeTab, onTabChange }) {
+  const { t, lang } = useI18n();
   const handleLogout = async () => {
-    if (window.confirm("Are you sure you want to log out?")) {
+    if (window.confirm(t('logout.confirm'))) {
       try {
         await logoutUser();
       } catch (err) {
@@ -31,7 +33,7 @@ export default function Navbar({ user, activeTab, onTabChange }) {
               onClick={() => onTabChange('dashboard')}
             >
               <Sun size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Dashboard
+              {t('nav.dashboard')}
             </button>
           </li>
           <li>
@@ -40,7 +42,7 @@ export default function Navbar({ user, activeTab, onTabChange }) {
               onClick={() => onTabChange('forecast')}
             >
               <BarChart3 size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Forecast
+              {t('nav.forecast')}
             </button>
           </li>
           <li>
@@ -49,7 +51,7 @@ export default function Navbar({ user, activeTab, onTabChange }) {
               onClick={() => onTabChange('notifications')}
             >
               <Bell size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Alerts
+              {t('nav.alerts')}
             </button>
           </li>
           {user && (
@@ -59,7 +61,7 @@ export default function Navbar({ user, activeTab, onTabChange }) {
                 onClick={() => onTabChange('history')}
               >
                 <BarChart3 size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-                History
+                {t('nav.history')}
               </button>
             </li>
           )}
@@ -67,11 +69,21 @@ export default function Navbar({ user, activeTab, onTabChange }) {
             <li>
               <button className="nav-link" onClick={handleLogout} title="Logout">
                 <LogOut size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-                Logout
+                {t('nav.logout')}
               </button>
             </li>
           )}
         </ul>
+
+        <button
+          className="btn btn-secondary nav-lang"
+          onClick={toggleLanguage}
+          title={lang === 'hi' ? 'Switch to English' : 'हिंदी में बदलें'}
+          style={{ padding: '6px 12px', fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 5 }}
+        >
+          <Languages size={13} />
+          {lang === 'hi' ? 'English' : 'हिंदी'}
+        </button>
       </div>
     </nav>
   );

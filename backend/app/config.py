@@ -36,6 +36,12 @@ class Settings(BaseModel):
     enable_lstm_model: bool = os.getenv("ENABLE_LSTM_MODEL", "true").lower() in {"1", "true", "yes", "on"}
     enable_xgboost_model: bool = os.getenv("ENABLE_XGBOOST_MODEL", "true").lower() in {"1", "true", "yes", "on"}
 
+    # ML output realism calibration. The trained models were scaled from a
+    # 330 kW reference plant and tend to under-predict residential rooftops;
+    # this lift (1.6x default) brings peak ML output closer to real-world
+    # numbers while staying clamped to panel capacity.
+    ml_output_calibration: float = float(os.getenv("ML_OUTPUT_CALIBRATION", "1.6"))
+
 
 settings = Settings()
 

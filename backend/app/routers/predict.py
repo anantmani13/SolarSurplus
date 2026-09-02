@@ -5,6 +5,7 @@ from app.models.schemas import UserInput, PredictionResponse, HourlyForecast
 from app.services.weather_service import fetch_weather_forecast
 from app.services.solar_predictor import predictor
 from app.services.battery_optimizer import calculate_battery_schedule
+from app.services.solar_geometry import tilt_irradiance
 
 router = APIRouter()
 
@@ -33,6 +34,19 @@ async def generate_forecast(user_input: UserInput):
                 forecast_days=7,
             )
         weather_hours = weather["hourly"]
+
+        # 1b. Project irradiance onto the module plane if panel orientation is set
+        if user_input.tilt_deg and user_input.tilt_deg > 0:
+            weather_hours = [
+                tilt_irradiance(
+                    wh,
+                    latitude=user_input.latitude,
+                    longitude=user_input.longitude,
+                    tilt_deg=user_input.tilt_deg,
+                    azimuth_deg=user_input.azimuth_deg,
+                )
+                for wh in weather_hours
+            ]
 
         # 2. Predict solar generation
         generation = predictor.predict_generation(
@@ -100,6 +114,8 @@ async def generate_forecast(user_input: UserInput):
                 "panel_age_years": user_input.panel_age_years,
                 "battery_age_years": user_input.battery_age_years,
                 "current_charge_percent": user_input.current_battery_charge,
+                "panel_tilt_deg": user_input.tilt_deg,
+                "panel_azimuth_deg": user_input.azimuth_deg,
             },
             hourly_forecast=hourly_forecast,
             daily_summary=battery_result["daily_summary"],

@@ -191,6 +191,8 @@ class SolarPredictor:
         effective_capacity = panel_capacity_kw * degradation_factor
         self.last_used_model = "Physics-Based Estimation"
         plant_nominal_kw = 330.0
+        # Lift ML outputs toward realistic rooftop peaks (tunable via env).
+        calibration = settings.ml_output_calibration
 
         predictions = []
 
@@ -226,7 +228,7 @@ class SolarPredictor:
                         lstm_preds.append(0.0)
                     else:
                         pred_ratio = max(0.0, raw_pred_kw / plant_nominal_kw)
-                        gen = min(effective_capacity, pred_ratio * effective_capacity * 1.25)
+                        gen = min(effective_capacity, pred_ratio * effective_capacity * calibration)
                         lstm_preds.append(round(float(gen), 3))
 
                 self.last_used_model = "LSTM Neural Network"
@@ -249,7 +251,7 @@ class SolarPredictor:
                         predictions.append(0.0)
                     else:
                         pred_ratio = max(0.0, raw_preds_kw[i] / plant_nominal_kw)
-                        gen = min(effective_capacity, pred_ratio * effective_capacity * 1.25)
+                        gen = min(effective_capacity, pred_ratio * effective_capacity * calibration)
                         predictions.append(round(float(gen), 3))
 
                 self.last_used_model = "XGBoost Regressor"

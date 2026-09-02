@@ -20,6 +20,9 @@ class UserInput(BaseModel):
         default=10.0, gt=0,
         description="Average daily energy consumption in kWh"
     )
+    # Optional panel orientation so irradiance is projected onto the module plane
+    tilt_deg: float = Field(default=0, ge=0, le=90, description="Panel tilt from horizontal (°)")
+    azimuth_deg: float = Field(default=180, ge=0, le=360, description="Panel azimuth from North (°; 180 = South)")
     client_weather_data: Optional[dict] = Field(
         default=None,
         description="Optional pre-fetched weather data from the client to bypass backend IP rate limits"
